@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <glm/ext/matrix_transform.hpp>
 #include "chunk_mesh.h"
@@ -25,24 +26,24 @@ constexpr std::array<float, 12> BLOCK_FACE_DOWN = {
 };
 
 constexpr std::array<float, 12> BLOCK_FACE_NORTH = {
-  0.0f, 0.0f, 0.0f,
   0.0f, 1.0f, 0.0f,
+  1.0f, 1.0f, 0.0f,
+  0.0f, 0.0f, 0.0f,
   1.0f, 0.0f, 0.0f,
-  1.0f, 1.0f, 0.0f
 };
 
 constexpr std::array<float, 12> BLOCK_FACE_SOUTH = {
-  0.0f, 0.0f, 1.0f,
-  1.0f, 0.0f, 1.0f,
+  1.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 1.0f,
-  1.0f, 1.0f, 1.0f
+  1.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 1.0f,
 };
 
 constexpr std::array<float, 12> BLOCK_FACE_WEST = {
-  0.0f, 0.0f, 0.0f,
-  0.0f, 0.0f, 1.0f,
+  0.0f, 1.0f, 1.0f,
   0.0f, 1.0f, 0.0f,
-  0.0f, 1.0f, 1.0f
+  0.0f, 0.0f, 1.0f,
+  0.0f, 0.0f, 0.0f,
 };
 
 constexpr std::array<glm::vec2, 4> BLOCK_UV {
@@ -52,11 +53,19 @@ constexpr std::array<glm::vec2, 4> BLOCK_UV {
   glm::vec2(1.0f, 0.0f)
 };
 
+constexpr std::array<std::array<int, 4>, 4> UV_PERMS {{
+  {0 , 1, 2, 3},
+  {2 , 3, 0, 1},
+  {1, 0, 3, 2},
+  {3 , 1, 2, 0},
+
+}};
+
 constexpr std::array<float, 12> BLOCK_FACE_EAST = {
-  1.0f, 0.0f, 0.0f,
   1.0f, 1.0f, 0.0f,
+  1.0f, 1.0f, 1.0f,
+  1.0f, 0.0f, 0.0f,
   1.0f, 0.0f, 1.0f,
-  1.0f, 1.0f, 1.0f
 };
 
 constexpr std::array<unsigned int, 6> BLOCK_FACE_TRIANGLES = {
@@ -151,7 +160,7 @@ void ChunkMesh::Draw() {
   //glDrawArrays(GL_TRIANGLE_STRIP, 0, triangles.size());
 }
 
-void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block) {
+void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block_id) {
 
   const std::array<float, 12>* face;
 
@@ -178,9 +187,16 @@ void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block) {
       return;
   }
 
+  const Block& block = gBlockRegistry.GetBlock(block_id);
+
   float uv_scale = atlas_.GetTileSize();
   glm::ivec2 chunk_pos = chunk_.GetPos();
-  glm::vec2 uv_offset = atlas_.GetUV(gBlockRegistry.GetBlock(block).GetTexture(dir));
+  glm::vec2 uv_offset = atlas_.GetUV(block.GetTexture(dir));
+
+  int rot = 0;
+  if(block.RandomRotate(dir)) {
+    rot = (pos.x * 73856093u xor pos.y * 19349663u xor pos.z * 83492791u) % 4;
+  }
 
   int base_vertex_index = vertices.size();
 
@@ -189,7 +205,7 @@ void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block) {
     float vert_y = (*face)[i*3 + 1] + pos.y;
     float vert_z = (*face)[i*3 + 2] + pos.z;
 
-    glm::vec2 uv = BLOCK_UV[i];
+    glm::vec2 uv = BLOCK_UV[UV_PERMS[rot][i]];
     uv *= uv_scale;
     uv += uv_offset;
 

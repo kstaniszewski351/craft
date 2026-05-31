@@ -39,13 +39,15 @@ const Block& BlockRegistry::GetBlock(std::string name) const {
 
 void RegisterBlocks() {
   gBlockRegistry.Register("dirt", std::make_unique<UniformBlock>(
-   "res/textures/smile.png"
+   "res/textures/dirt.png"
   ));
   gBlockRegistry.Register("log", std::make_unique<LogBlock>(
     "res/textures/log_top.png", "res/textures/log_side.png"
   ));
-  gBlockRegistry.Register("grass", std::make_unique<UniformBlock>(
-    "res/textures/grass.png"
+  gBlockRegistry.Register("grass", std::make_unique<GrassBlock>(
+    "res/textures/grass_top.png",
+    "res/textures/dirt.png",
+    "res/textures/grass_side.png"
   ));
 }
 
