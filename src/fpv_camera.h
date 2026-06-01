@@ -1,6 +1,7 @@
 #pragma once
 
 #include "direction.h"
+#include "frustrum.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -19,7 +20,8 @@ struct FPVCamera {
   float near_plane = 0.1f;
   float far_plane = 100.0f;
   
-  glm::mat4 GetProjectionMat();
-  glm::mat4 GetViewMat();
+  glm::mat4 GetProjectionMat() const;
+  glm::mat4 GetViewMat() const;
+  Frustrum GetFrustrum() const;
   void Move(Direction direction, float distance);
 };

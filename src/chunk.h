@@ -32,7 +32,6 @@ class Chunk {
     char GetBlock(glm::ivec3 pos) const;
     const Blocks& GetBlocks() const;
     bool HasChanged() const;
-    static bool InChunk(glm::ivec3 pos);
     glm::ivec2 GetPos() const;
     void SetNeighbor(Chunk* neighbor, int index);
     Chunk* GetNeighbor(int direction) const;

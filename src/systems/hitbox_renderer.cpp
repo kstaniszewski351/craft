@@ -3,7 +3,7 @@
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include "../components/transform.h"
-#include "../components/aabb.h"
+#include "../components/box_collider.h"
 
 constexpr std::array<glm::vec3, 8> CUBE_VERTS {
     glm::vec3(0.0f, 0.0f, 0.0f),  // 0: (0,0,0)
@@ -49,7 +49,7 @@ HitboxRenderer::HitboxRenderer(entt::registry& reg) : reg_(reg), shader_("res/sh
 };
 
 void HitboxRenderer::Draw() {
-  auto view = reg_.view<Transform, AABB>();
+  auto view = reg_.view<Transform, BoxCollider>();
   shader_.Use();
   ubo_.BindTarget(GL_UNIFORM_BUFFER, 1);
   glBindVertexArray(vao_);

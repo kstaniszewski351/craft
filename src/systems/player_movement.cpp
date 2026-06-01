@@ -1,6 +1,6 @@
 #include "player_movement.h"
 #include "../components/physics_object.h"
-#include "../components/aabb.h"
+#include "../components/box_collider.h"
 #include "../components/transform.h"
 #include "../components/view.h"
 #include "../components/player_controller.h"
@@ -25,7 +25,7 @@ bool DoesCollide(glm::vec3 p1, glm::vec3 p2, glm::ivec3 pos) {
 }
 
 void MovePlayer(entt::registry& reg, Window& window, World& world, float delta_time) {
-  auto entt_view = reg.view<Transform, AABB, PhysicsObject, View, PlayerController>();
+  auto entt_view = reg.view<Transform, BoxCollider, PhysicsObject, View, PlayerController>();
 
   for(auto [entity, transform, box, physics, view, player_controller] : entt_view.each()) {
 

@@ -1,6 +1,6 @@
 #include "scene.h"
 #include "camera_data.h"
-#include "components/aabb.h"
+#include "components/box_collider.h"
 #include "components/physics_object.h"
 #include "components/player_controller.h"
 #include "components/transform.h"
@@ -21,13 +21,13 @@ Scene::Scene()
   reg_.emplace<Transform>(entity, Transform({
     .pos = glm::vec3(1, 7, 10)
   }));
-  reg_.emplace<AABB>(entity, glm::vec3(0.8, 1.8, 0.8));
+  reg_.emplace<BoxCollider>(entity, glm::vec3(0.8, 1.8, 0.8));
   reg_.emplace<PhysicsObject>(entity);
   reg_.emplace<View>(entity, View({
     .zOffset = 1.6
   }));
   reg_.emplace<PlayerController>(entity);
-  camera.fov = 90;
+  camera_.fov = 90;
 }
 
 void Scene::Draw(float delta_time, Window& window) {
@@ -44,27 +44,27 @@ void Scene::Draw(float delta_time, Window& window) {
   //camera
   updateCameraData();
   CameraData camera_data {
-    .view = camera.GetViewMat(),
-    .projection = camera.GetProjectionMat(),
-    .position = camera.position
+    .view = camera_.GetViewMat(),
+    .projection = camera_.GetProjectionMat(),
+    .position = camera_.position
   };
   camera_ebo_.BindTarget(GL_UNIFORM_BUFFER, 0);
   camera_ebo_.Data(sizeof(camera_data), &camera_data);
 
   //draw
-  world_renderer_.Draw();
+  world_renderer_.Draw(camera_);
   hitbox_renderer_.Draw();
 }
 
 void Scene::updateCameraData() {
-  auto [view, tranform, hitbox] = reg_.get<View, Transform, AABB>(player_);
+  auto [view, tranform, hitbox] = reg_.get<View, Transform, BoxCollider>(player_);
 
   glm::vec3 pos = tranform.pos;
   pos.y += view.zOffset;
   pos.x += hitbox.size.x / 2;
   pos.z += hitbox.size.z / 2;
 
-  camera.position = pos;
-  camera.rotation = view.rotation;
+  camera_.position = pos;
+  camera_.rotation = view.rotation;
 }
 

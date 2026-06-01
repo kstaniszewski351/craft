@@ -14,47 +14,16 @@ Chunk::Chunk(glm::ivec2 pos, World& world) :
 
   neighbors_.fill(nullptr);
   
-  // for(int x = 0; x < 16; x++) {
-  //   for(int y = 0; y < 256; y++) {
-  //     for(int z = 0; z < 16; z++) {
-  //       auto block = &blocks_->data()[x][y][z];
-
-  //       if(y == 4) {
-  //         *block = 2;
-  //       }
-  //       else if(y < 4) {
-  //         *block = 1;
-  //       }
-  //       else {
-  //         *block = 0;
-  //       }
-  //     }
-  //   }
-  // }
   Generate(*this);
 }
 
-
-bool Chunk::InChunk(glm::ivec3 pos) {
-  // if(pos.x > 15 | pos.x < 0 | pos.y < 0 | pos.y > 15 | pos.z < 0 | pos.z > 15) {
-  //   return false;
-  // }
-  return true;
-}
-
 void Chunk::SetBlock(char block, glm::ivec3 pos) {
-  // if(!InChunk(pos)) {
-  //   return;
-  // }
   blocks_->data()[pos.x][pos.y][pos.z] = block;
 
   has_changed_ = true;
 }
 
 char Chunk::GetBlock(glm::ivec3 pos) const {
-  // if(!InChunk(pos)) {
-  //   return -1;
-  // }
   return blocks_->data()[pos.x][pos.y][pos.z];
 }
 

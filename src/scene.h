@@ -20,7 +20,7 @@ class Scene {
     WorldRenderer world_renderer_;
     HitboxRenderer hitbox_renderer_;
     entt::entity player_;
-    FPVCamera camera;
+    FPVCamera camera_;
     entt::registry reg_;
     Buffer camera_ebo_;
 };

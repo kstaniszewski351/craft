@@ -1,13 +1,13 @@
 #include "physics.h"
 #include "../components/transform.h"
-#include "../components/aabb.h"
+#include "../components/box_collider.h"
 #include "../components/physics_object.h"
 #include "../axis.h"
 #include <glm/common.hpp>
 //#include <entt/entity/fwd.hpp>
 
 
-void Collide(const AABB& aabb, Transform& transform, PhysicsObject& physics, World& world, float delta_time) {
+void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physics, World& world, float delta_time) {
   glm::vec3 velocity = physics.velocity * delta_time;
   glm::vec3 p1 = transform.pos;
   glm::vec3 p2 = transform.pos + aabb.size;
@@ -156,7 +156,7 @@ void Collide(const AABB& aabb, Transform& transform, PhysicsObject& physics, Wor
 }
 
 void Physics(entt::registry& reg, World& world, float delta_time) {
-  auto view = reg.view<Transform, AABB, PhysicsObject>();
+  auto view = reg.view<Transform, BoxCollider, PhysicsObject>();
 
   for(auto [entity, transform, aabb, physics] : view.each()) {
     constexpr float dt = 1.0 / 60;

@@ -64,6 +64,7 @@ add_executable(main
   src/atlas_builder.cpp
   src/block.cpp
   src/chunk_gen.cpp
+  src/frustrum.cpp
   lib/glad/src/glad.c
 )
 

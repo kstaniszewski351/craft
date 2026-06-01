@@ -1,6 +1,7 @@
 #pragma once
 
 #include "atlas.h"
+#include "fpv_camera.h"
 #include "shader.h"
 #include "world.h"
 #include "chunk_mesh.h"
@@ -14,7 +15,7 @@ class WorldRenderer {
   const Atlas& GetAtlas(); 
 
   void Update();
-  void Draw();
+  void Draw(const FPVCamera& camera);
  private:
   World& world_;
   //GLuint model_data_buffer_;

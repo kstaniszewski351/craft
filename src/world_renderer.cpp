@@ -3,13 +3,18 @@
 #include "bitmap.h"
 #include "block_registry.h"
 #include "chunk_mesh.h"
+#include "fpv_camera.h"
+#include "frustrum.h"
 #include "shader.h"
 #include "texture.h"
 #include "world.h"
+#include <algorithm>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
 #include <memory>
 #include <utility>
+#include <vector>
 
 WorldRenderer::WorldRenderer(World& world) : 
   world_(world),
@@ -48,23 +53,37 @@ void WorldRenderer::Update() {
   for(auto& mesh : meshes_) {
     mesh.second->Update();
   }
+
+
 }
 
-void WorldRenderer::Draw() {
+void WorldRenderer::Draw(const FPVCamera& camera) {
+
+  Frustrum frustrum = camera.GetFrustrum();
+  //crate draw list
+
+  std::vector<std::pair<float, ChunkMesh*>> draw_list;
+
+  for(auto& [pos, mesh] : meshes_) {
+    AABB aabb;
+    aabb.center = glm::vec3(pos.x * 16 + 8, 128, pos.y * 16 + 8);
+    aabb.extents = {8, 128, 8};
+
+    if(aabb.IsInFrustrum(frustrum)) {
+      auto p = mesh.get();
+      float d = glm::distance(glm::vec2(camera.position.x, camera.position.z), glm::vec2(pos.x * 16 + 8, pos.y * 16 + 8));
+      draw_list.push_back({d, p});
+    }
+  }
+
+  std::sort(draw_list.begin(), draw_list.end(), [](auto& a, auto& b) {return a.first < b.first;});
+
   chunk_shader_.Use();
   atlas_.getTexture().Bind(0);
-  //glBindBufferBase(GL_UNIFORM_BUFFER, 1, model_data_buffer_);
-  //glBindVertexArray(vao_);
 
-  for(const auto& mesh : meshes_) {
-    
-    //glm::ivec2 chunk_pos = mesh.first;
-  
-    //glBindBuffer(GL_UNIFORM_BUFFER, model_data_buffer_);
-    //glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::ivec2), &chunk_pos, GL_STATIC_DRAW);
-
-    mesh.second->Draw();
-    
+  for(const auto [_, mesh] : draw_list) {
+    //mesh.second->Draw();
+    mesh->Draw();
   }
 }
 
