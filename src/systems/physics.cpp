@@ -159,14 +159,14 @@ void Physics(entt::registry& reg, World& world, float delta_time) {
   auto view = reg.view<Transform, BoxCollider, PhysicsObject>();
 
   for(auto [entity, transform, aabb, physics] : view.each()) {
-    constexpr float dt = 1.0 / 60;
-    constexpr float h_drag = 1.0 - 0.088;
-    constexpr float v_drag = 0.993;
+    //constexpr float dt = 1.0 / 60;
+    float h_drag = std::exp(-5 * delta_time) ;
+    float v_drag = std::exp(-0.1 * delta_time);
 
-    physics.velocity.y += -10 * dt;
+    physics.velocity.y += -10 * delta_time;
     physics.velocity.y *= v_drag;
     physics.velocity.x *= h_drag;
     physics.velocity.z *= h_drag;
-    Collide(aabb, transform, physics, world, dt);
+    Collide(aabb, transform, physics, world, delta_time);
   }
 };
