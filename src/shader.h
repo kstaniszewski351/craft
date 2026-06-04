@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 #include "asset_meta.h"
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <glm/glm.hpp>
 
 

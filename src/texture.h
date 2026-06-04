@@ -1,6 +1,6 @@
 #pragma  once
 
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <memory>
 #include "bitmap.h"
 #include "asset_meta.h"

@@ -13,12 +13,15 @@ find_package(glm CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
 
-# FetchContent_Declare(
-#   glad
-#   GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-# )
-# FetchContent_MakeAvailable(glad)
+FetchContent_Declare(
+  glad
+  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+  GIT_TAG v2.0.8
+  SOURCE_SUBDIR	cmake
+)
+FetchContent_MakeAvailable(glad)
 
+glad_add_library(glad STATIC API gl:core=4.6)
 add_executable(main
   src/main.cpp
   src/shader.cpp
@@ -50,17 +53,16 @@ add_executable(main
   src/init_gl.cpp
   src/game.cpp
   src/entity.cpp
-  lib/glad/src/glad.c
 )
 
 target_include_directories(main PRIVATE
   ${Stb_INCLUDE_DIR}
-  "lib/glad/include"
 )
 
 target_link_libraries(main PRIVATE
   SDL3::SDL3
   glm::glm
   EnTT::EnTT
+  glad
 )
 

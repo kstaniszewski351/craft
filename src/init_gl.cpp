@@ -1,6 +1,6 @@
 #include "init_gl.h"
 #include <SDL3/SDL_video.h>
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GL/gl.h>
 #include <stdexcept>
 
