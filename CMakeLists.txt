@@ -22,38 +22,20 @@ find_package(EnTT CONFIG REQUIRED)
 add_executable(main
   src/main.cpp
   src/shader.cpp
-  src/shader.h
   src/asset_manager.cpp
-  src/asset_manager.h
-  src/asset.h
-  src/asset_meta.h
   src/text_file.cpp
-  src/text_file.h
   src/camera_controller.cpp
-  src/camera_controller.h
   src/chunk_mesh.cpp
-  src/chunk_mesh.h
   src/chunk.cpp
-  src/chunk.h
-  src/direction.h
-  src/fpv_camera.h
   src/fpv_camera.cpp
   src/shader.cpp
-  src/shader.h
-  src/world_renderer.h
   src/world_renderer.cpp
   src/world.cpp
-  src/world.h
   src/atlas.cpp
-  src/atlas.h
   src/bitmap.cpp
-  src/bitmap.h
   src/texture.cpp
-  src/texture.h
   src/stb_impl.cpp
   src/buffer.cpp
-  src/buffer.h
-  src/scene.h
   src/scene.cpp
   src/systems/hitbox_renderer.cpp
   src/systems/physics.cpp
@@ -65,6 +47,9 @@ add_executable(main
   src/block.cpp
   src/chunk_gen.cpp
   src/frustrum.cpp
+  src/init_gl.cpp
+  src/game.cpp
+  src/entity.cpp
   lib/glad/src/glad.c
 )
 

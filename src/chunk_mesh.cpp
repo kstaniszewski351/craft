@@ -195,7 +195,7 @@ void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block_id) {
 
   int rot = 0;
   if(block.RandomRotate(dir)) {
-    rot = (pos.x * 73856093u xor pos.y * 19349663u xor pos.z * 83492791u) % 4;
+    rot = (pos.x * 73856093u xor pos.y * 19349663u xor pos.z * 83492791u) & 3;
   }
 
   int base_vertex_index = vertices.size();

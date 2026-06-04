@@ -4,6 +4,7 @@
 #include "../components/transform.h"
 #include "../components/view.h"
 #include "../components/player_controller.h"
+#include <SDL3/SDL_scancode.h>
 #include <glm/ext/scalar_constants.hpp>
 #include "../input_manager.h"
 #include "../direction.h"
@@ -52,6 +53,15 @@ void MovePlayer(entt::registry& reg, Window& window, World& world, float delta_t
     //movement
     int num_keys;
     const bool* keyboard_state = SDL_GetKeyboardState(&num_keys);
+
+    if(keyboard_state[SDL_SCANCODE_LSHIFT]) {
+      box.size = glm::vec3(0.8, 1.4, 0.8);
+      view.zOffset = 1.2;
+    }
+    else {
+      box.size = glm::vec3(0.8, 1.8, 0.8);
+      view.zOffset = 1.6;
+    }
 
     if(keyboard_state[SDL_SCANCODE_SPACE] && physics.onGround) {
       physics.velocity.y += 5;
