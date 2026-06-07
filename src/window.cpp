@@ -1,5 +1,6 @@
 #include "window.h"
 #include <SDL3/SDL_error.h>
+#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_video.h>
 #include <glm/glm.hpp>
 
@@ -10,7 +11,7 @@ Window::Window(std::string title, glm::ivec2 size) {
   if(window_ == nullptr) {
     throw std::runtime_error(std::string("Failed to create window: ") + SDL_GetError());
   }
-  SDL_SetWindowRelativeMouseMode(window_, true);
+  
 
   gl_context_ = SDL_GL_CreateContext(window_);
   if(gl_context_ == nullptr) {
@@ -26,18 +27,26 @@ void Window::Swap() {
   SDL_GL_SwapWindow(window_);
 }
 
-glm::ivec2 Window::GetSize() {
+void Window::SetLockCursor(bool value) {
+  SDL_SetWindowRelativeMouseMode(window_, value);
+}
+
+bool Window::GetLockCursor() const {
+  return SDL_GetWindowRelativeMouseMode(window_);
+}
+
+glm::ivec2 Window::GetSize() const {
   glm::ivec2 size;
   SDL_GetWindowSize(window_, &size.x, &size.y);
   return size;
 }
 
-float Window::GetAspectRatio() {
+float Window::GetAspectRatio() const {
   glm::ivec2 size = GetSize();
   return (float)size.x / size.y;
 }
 
-glm::vec2 Window::GetRelativeMousePos(glm::vec2 pos) {
+glm::vec2 Window::GetRelativeMousePos(glm::vec2 pos) const {
   glm::vec2 size = GetSize();
   return pos / size;
 }

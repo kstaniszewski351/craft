@@ -12,9 +12,11 @@ class Window {
   ~Window();
   void Swap();
   void SetSize(glm::ivec2 size);
-  glm::ivec2 GetSize();
-  float GetAspectRatio();
-  glm::vec2 GetRelativeMousePos(glm::vec2 pos);
+  void SetLockCursor(bool value);
+  bool GetLockCursor() const;
+  glm::ivec2 GetSize() const;
+  float GetAspectRatio() const;
+  glm::vec2 GetRelativeMousePos(glm::vec2 pos) const;
 
  private:
   SDL_Window* window_;

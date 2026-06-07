@@ -2,6 +2,13 @@
   "dependencies": [
     "glm",
     "stb",
-    "entt"
+    "entt",
+    "nuklear"
+  ],
+  "overrides": [
+    {
+      "name": "nuklear",
+      "version": "4.13.3"
+    }
   ]
 }

@@ -4,6 +4,7 @@
 #include <entt/entt.hpp>
 #include "../shader.h"
 #include "../buffer.h"
+#include "../vao.h"
 
 class HitboxRenderer {
  public:
@@ -15,5 +16,5 @@ class HitboxRenderer {
   Buffer vbo_;
   Buffer ebo_;
   Buffer ubo_;
-  GLuint vao_;
+  VAO vao_;
 };

@@ -1,7 +1,8 @@
 #include "buffer.h"
+#include <cstddef>
 
 Buffer::Buffer() {
-  glGenBuffers(1, &id_);
+  glCreateBuffers(1, &id_);
 }
 
 void Buffer::Data(std::size_t size, const void* data, GLenum usage) {
@@ -14,6 +15,10 @@ void Buffer::Bind(GLenum target) {
 
 void Buffer::BindTarget(GLenum target, int index) {
   glBindBufferBase(target, index, id_);
+}
+
+void Buffer::BindVertexBuffer(int index, std::size_t offset, std::size_t stride) {
+  glBindVertexBuffer(index, id_, offset, stride);
 }
 
 Buffer::~Buffer() {

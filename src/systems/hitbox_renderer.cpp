@@ -2,6 +2,7 @@
 #include <entt/entity/fwd.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
 #include "../components/transform.h"
 #include "../components/box_collider.h"
 
@@ -31,28 +32,38 @@ constexpr std::array<unsigned int, 12*2> CUBE_LINES {
     3, 7
 };
 
+constexpr std::array<VAO::Attrib, 1> HITBOX_VERTEX_FORMAT {
+  {3, GL_FLOAT, 0}
+};
+
 // struct ModelData {
 //   glm::vec3 pos;
 //   glm::vec3 scale;
 // };
 
-HitboxRenderer::HitboxRenderer(entt::registry& reg) : reg_(reg), shader_("res/shaders/debug.frag", "res/shaders/debug.vert") {
-  glCreateVertexArrays(1, &vao_);
-  glBindVertexArray(vao_);
-  vbo_.Bind(GL_ARRAY_BUFFER);
-  ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
+HitboxRenderer::HitboxRenderer(entt::registry& reg)
+  : reg_(reg),
+    shader_("res/shaders/debug.frag", "res/shaders/debug.vert"),
+    vao_(HITBOX_VERTEX_FORMAT.begin(), HITBOX_VERTEX_FORMAT.end(), sizeof(glm::vec3)) {
+  //glCreateVertexArrays(1, &vao_);
+  //glBindVertexArray(vao_);
+  // vbo_.Bind(GL_ARRAY_BUFFER);
+  // ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
   vbo_.Data(sizeof(CUBE_VERTS), &CUBE_VERTS);
   ebo_.Data(sizeof(CUBE_LINES), &CUBE_LINES);
 
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+  // glEnableVertexAttribArray(0);
+  // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 };
 
 void HitboxRenderer::Draw() {
   auto view = reg_.view<Transform, BoxCollider>();
   shader_.Use();
+  vao_.Bind();
+  ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
+  vbo_.BindVertexBuffer(0, 0, sizeof(glm::vec3));
   ubo_.BindTarget(GL_UNIFORM_BUFFER, 1);
-  glBindVertexArray(vao_);
+  // glBindVertexArray(vao_);
 
   for(auto [entity, transform, box] : view.each()) {
     

@@ -66,6 +66,7 @@ class Texture : public Asset {
   );
   Texture(
     const Bitmap& bitmap,
+    bool mipmaps = true,
     Texture::Options = Texture::Options::Default()
   );
   ~Texture() override;
@@ -78,7 +79,7 @@ class Texture : public Asset {
   PixelFormat GetPixelFormat() const;
   PixelType GetPixelType() const;
 
-  static int GetMaxMipmaps(int width, int height);
+  //static int GetMaxMipmaps(int width, int height);
  private:
   int width_;
   int height_;

@@ -17,6 +17,7 @@ class InputManager {
   const Mouse& GetMouseDowns() const;
 
   glm::vec2 GetMouseDelta() const;
+  glm::vec2 GetMousePos() const;
  private:
   glm::vec2 mouse_delta = glm::vec2();
   Mouse mouse_ {};

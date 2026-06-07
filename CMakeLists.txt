@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_CXX_STANDARD 20)
 
 set(VCPKG_TARGET_TRIPLET "x64-linux")
-include("$ENV{HOME}/.local/share/vcpkg/scripts/buildsystems/vcpkg.cmake")
+include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 include(FetchContent)
 
 project(opengl)
@@ -12,6 +12,7 @@ find_package(SDL3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
+find_package(unofficial-nuklear CONFIG REQUIRED)
 
 FetchContent_Declare(
   glad
@@ -19,6 +20,12 @@ FetchContent_Declare(
   GIT_TAG v2.0.8
   SOURCE_SUBDIR	cmake
 )
+# FetchContent_Declare(
+#   nuklear
+#   GIT_REPOSITORY https://github.com/Immediate-Mode-UI/Nuklear.git
+#   GIT_TAG v4.13.3
+# )
+
 FetchContent_MakeAvailable(glad)
 
 glad_add_library(glad STATIC API gl:core=4.6)
@@ -37,7 +44,6 @@ add_executable(main
   src/atlas.cpp
   src/bitmap.cpp
   src/texture.cpp
-  src/stb_impl.cpp
   src/buffer.cpp
   src/scene.cpp
   src/systems/hitbox_renderer.cpp
@@ -53,10 +59,10 @@ add_executable(main
   src/init_gl.cpp
   src/game.cpp
   src/entity.cpp
-)
-
-target_include_directories(main PRIVATE
-  ${Stb_INCLUDE_DIR}
+  src/stb_impl.cpp
+  src/nuklear_impl.cpp
+  src/gui.cpp
+  src/vao.cpp
 )
 
 target_link_libraries(main PRIVATE

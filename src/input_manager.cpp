@@ -28,6 +28,12 @@ glm::vec2 InputManager::GetMouseDelta() const {
   return mouse_delta;
 }
 
+glm::vec2 InputManager::GetMousePos() const {
+  glm::vec2 pos;
+  SDL_GetMouseState(&pos.x, &pos.y);
+  return pos;
+}
+
 const Mouse& InputManager::GetMouseDowns() const {
   return mouse_;
 }

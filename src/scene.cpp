@@ -47,7 +47,7 @@ void Scene::Draw(float delta_time, Window& window) {
 
   //draw
   world_renderer_.Draw(camera_);
-  //hitbox_renderer_.Draw();
+  hitbox_renderer_.Draw();
 }
 
 void Scene::updateCameraData() {

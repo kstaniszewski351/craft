@@ -58,6 +58,20 @@ Bitmap::Bitmap(int width, int height, PixelFormat format, PixelType pixel_type)
   std::memset(data_, 0, width * height * bytes_per_pixel);
 }
 
+Bitmap::Bitmap(int width, int height, const void* data, PixelFormat format, PixelType pixel_type)
+: width_(width),
+  height_(height),
+  pixel_format_(format),
+  pixel_type_(pixel_type) {
+  
+  int n_channels = (int)pixel_format_ + 1;
+  int bytes_per_pixel = pixel_type_sizes[(int)pixel_type_] * n_channels;
+  int total_bytes = width_ * height_ * bytes_per_pixel;
+  data_ = std::malloc(width * height * bytes_per_pixel);
+  std::memcpy(data_, data, total_bytes);
+};
+
+
 Bitmap::Bitmap(int x, int y, int w, int h, const Bitmap& bitmap) : width_(w), height_(h) {
 
   throw std::runtime_error("not implemented");

@@ -23,6 +23,7 @@ class Bitmap {
 
   Bitmap(const std::string& path, PixelFormat format = PixelFormat::Default, PixelType pixel_type = PixelType::Default);
   Bitmap(int width, int height, PixelFormat format = PixelFormat::RGB, PixelType pixel_type = PixelType::UInt8);
+  Bitmap(int width, int height, const void* data, PixelFormat format = PixelFormat::RGB, PixelType pixel_type = PixelType::UInt8);
   Bitmap(int x, int y, int w, int h, const Bitmap& bitmap);
   ~Bitmap();
   

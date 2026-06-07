@@ -3,9 +3,11 @@
 #include "bitmap.h"
 #include "asset_manager.h"
 #include "asset.h"
+#include "glad/gl.h"
 //#include "cubemap.h"
 //#include "cubemap_texture.h"
 //#include "mesh.h"
+#include <bit>
 #include <cmath>
 #include <memory>
 #include <array>
@@ -69,6 +71,10 @@ constexpr GLenum ToGLFilterMode(FilterMode filter_mode, MipmapMode mipmap_mode) 
 constexpr GLenum ToGLWrapMode(WrapMode wrap_mode) {
   return to_gl_wrap_mode[(int)wrap_mode];
 }
+int GetMaxMipmaps(unsigned int width, unsigned int height) {
+  //int resolution = output.GetResolution() * std::pow(0.5, mipmap_level);
+  return std::bit_width(std::max(width, height));
+}
 
 // std::shared_ptr<Asset> TextureMeta::Load() {
 //   std::shared_ptr<Bitmap> bitmap = AssetManager::Get().GetAsset<Bitmap>(bitmap_asset);
@@ -102,32 +108,40 @@ Texture::Texture(int width, int height, bool mipmaps, PixelFormat pixel_format, 
   );
 }
 
-int Texture::GetMaxMipmaps(int width, int height) {
-  //int resolution = output.GetResolution() * std::pow(0.5, mipmap_level);
-  int levels = std::log2(std::max(width, height)) + 1;
-}
 
-Texture::Texture(const Bitmap& bitmap, Texture::Options options)
+Texture::Texture(const Bitmap& bitmap, bool mipmaps, Texture::Options options)
  : width_(bitmap.GetWidth()),
    height_(bitmap.GetHeight()),
    pixel_format_(bitmap.GetPixelFormat()),
    pixel_type_(bitmap.GetPixelType()) {
   
-  glGenTextures(1, &id_);
-  UpdateOptions(std::move(options));
+
 
   GLenum internal_format = ToGLInternalPixelFormat(bitmap.GetPixelType(), bitmap.GetPixelFormat());
   GLenum pixel_format = ToGLPixelFormat(bitmap.GetPixelFormat());
   GLenum pixel_type = ToGLPixelType(bitmap.GetPixelType());
 
-  glBindTexture(GL_TEXTURE_2D, id_);
-  glTexImage2D(
-    GL_TEXTURE_2D,
-    0,
+  int mip_levels = 1;
+  if(mipmaps) {
+    mip_levels = GetMaxMipmaps(bitmap.GetWidth(), bitmap.GetHeight());
+  }
+  
+  glCreateTextures(GL_TEXTURE_2D, 1, &id_);
+  UpdateOptions(std::move(options));
+  glTextureStorage2D(
+    id_,
+    mip_levels,
     internal_format,
     bitmap.GetWidth(),
-    bitmap.GetHeight(),
+    bitmap.GetHeight()
+  );
+  glTextureSubImage2D(
+    id_,
     0,
+    0,
+    0,
+    bitmap.GetWidth(),
+    bitmap.GetHeight(),
     pixel_format,
     pixel_type,
     bitmap.GetPixels()
@@ -139,8 +153,9 @@ Texture::~Texture() {
 }
 
 void Texture::Bind(int slot) const {
-  glActiveTexture(GL_TEXTURE0 + slot);
-  glBindTexture(GL_TEXTURE_2D, id_);
+  // glActiveTexture(GL_TEXTURE0 + slot);
+  // glBindTexture(GL_TEXTURE_2D, id_);
+  glBindTextureUnit(slot, id_);
 }
 
 void Texture::GenMipmaps() {
@@ -165,9 +180,9 @@ GLuint Texture::GetID() const {
 }
 
 void Texture::UpdateOptions(Texture::Options options) {
-  glBindTexture(GL_TEXTURE_2D, id_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, ToGLFilterMode(options.filter_mode, options.mipmap_mode));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, ToGLFilterMode(options.filter_mode, MipmapMode::Disabled));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ToGLWrapMode(options.wrap_mode));
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ToGLWrapMode(options.wrap_mode));
+  //glBindTexture(GL_TEXTURE_2D, id_);
+  glTextureParameteri(id_, GL_TEXTURE_MIN_FILTER, ToGLFilterMode(options.filter_mode, options.mipmap_mode));
+  glTextureParameteri(id_, GL_TEXTURE_MAG_FILTER, ToGLFilterMode(options.filter_mode, MipmapMode::Disabled));
+  glTextureParameteri(id_, GL_TEXTURE_WRAP_S, ToGLWrapMode(options.wrap_mode));
+  glTextureParameteri(id_, GL_TEXTURE_WRAP_T, ToGLWrapMode(options.wrap_mode));
 }

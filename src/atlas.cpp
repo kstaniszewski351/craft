@@ -21,7 +21,7 @@ Texture createTexture(const std::vector<Bitmap>& bitmaps, int tile_size, int pow
 
   //uv_size_ = 1.0 / pow2_size_;
   
-  Texture texture = Texture(bitmap, Texture::Options {
+  Texture texture = Texture(bitmap, true, Texture::Options {
     .filter_mode = FilterMode::Nearest,
     .mipmap_mode = MipmapMode::Linear
   });

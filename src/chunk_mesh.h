@@ -7,6 +7,7 @@
 #include <vector>
 #include "glad/gl.h"
 #include "direction.h"
+#include "vao.h"
 
 struct ChunkVertex {
   glm::vec3 pos;
@@ -26,6 +27,7 @@ class ChunkMesh {
   void addFace(Direction dir, glm::ivec3 pos, char block);
   Buffer vbo_;
   Buffer ebo_;
-  GLuint vao_;
+  VAO vao_;
+  //GLuint vao_;
   const Atlas& atlas_;
 };

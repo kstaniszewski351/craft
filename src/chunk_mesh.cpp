@@ -1,15 +1,17 @@
-#include <algorithm>
 #include <array>
+#include <cstddef>
 #include <glm/ext/matrix_transform.hpp>
 #include "chunk_mesh.h"
 #include "atlas.h"
 #include "block_registry.h"
 #include "buffer.h"
 #include "chunk.h"
-#include "texture.h"
+#include "vao.h"
 
-
-
+constexpr std::array<VAO::Attrib, 2> CHUNK_VERTEX_FORMAT {{
+  {3, GL_FLOAT, offsetof(ChunkVertex, pos)},
+  {2, GL_FLOAT, offsetof(ChunkVertex, uv)}
+}};
 
 constexpr std::array<float, 12> BLOCK_FACE_UP = {
   0.0f, 1.0f, 0.0f,
@@ -73,17 +75,10 @@ constexpr std::array<unsigned int, 6> BLOCK_FACE_TRIANGLES = {
   0, 3, 2
 };
 
-ChunkMesh::ChunkMesh(Chunk& chunk, const Atlas& atlas) : chunk_(chunk), atlas_(atlas) {
-  glGenVertexArrays(1, &vao_);
-  glBindVertexArray(vao_);
-
-  vbo_.Bind(GL_ARRAY_BUFFER);
-  ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
-
-  glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(ChunkVertex), (void*)0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(ChunkVertex), (void*)(sizeof(float) * 3));
+ChunkMesh::ChunkMesh(Chunk& chunk, const Atlas& atlas)
+  : chunk_(chunk),
+    vao_(CHUNK_VERTEX_FORMAT.begin(), CHUNK_VERTEX_FORMAT.end(), sizeof(ChunkVertex)),
+    atlas_(atlas) {
   Update();
 }
 
@@ -154,10 +149,10 @@ void ChunkMesh::Draw() {
     return;
   }
 
-  glBindVertexArray(vao_);
-
+  vao_.Bind();
+  ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
+  vbo_.BindVertexBuffer(0, 0, sizeof(ChunkVertex));
   glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(triangles.size()), GL_UNSIGNED_INT, 0);
-  //glDrawArrays(GL_TRIANGLE_STRIP, 0, triangles.size());
 }
 
 void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block_id) {
