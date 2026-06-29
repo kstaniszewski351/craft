@@ -1,17 +1,45 @@
 #include "physics.h"
-#include "../components/transform.h"
-#include "../components/box_collider.h"
-#include "../components/physics_object.h"
-#include "../axis.h"
+#include "axis.h"
+#include "components/transform.h"
+#include "components/box_collider.h"
+#include "components/physics_object.h"
 #include <glm/common.hpp>
-//#include <entt/entity/fwd.hpp>
+
+bool Collides(const Transform& transform, const BoxCollider& aabb, glm::ivec3 block_pos) {
+  glm::vec3 p1 = transform.pos - glm::vec3(aabb.size.x / 2.0f, 0.0f, aabb.size.z / 2.0f);
+  glm::vec3 p2 = transform.pos + glm::vec3(aabb.size.x / 2.0f, aabb.size.y, aabb.size.z / 2.0f);
+  glm::ivec3 ip1 = glm::floor(p1);
+  glm::ivec3 ip2 = glm::floor(p2);
+
+
+  for(int x = p1.x; x <= p2.x; x++) {
+    for(int y = p1.y; y <= p2.y; y++) {
+      for(int z = p1.z; z <= p2.z; z++) {
+        if(glm::ivec3(x, y, z) == block_pos) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+struct AAFace {
+  glm::vec2 p1;
+  glm::vec2 p2;
+  float d;
+  Axis axis;
+};
 
 
 void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physics, World& world, float delta_time) {
   glm::vec3 velocity = physics.velocity * delta_time;
-  glm::vec3 p1 = transform.pos;
-  glm::vec3 p2 = transform.pos + aabb.size;
-  float eps = 1e-3f;
+  // glm::vec3 p1 = transform.pos;
+  // glm::vec3 p2 = transform.pos + aabb.size;
+  glm::vec3 p1 = transform.pos - glm::vec3(aabb.size.x / 2.0f, 0.0f, aabb.size.z / 2.0f);
+  glm::vec3 p2 = transform.pos + glm::vec3(aabb.size.x / 2.0f, aabb.size.y, aabb.size.z / 2.0f);
+  float eps = 1e-5f;
+  //float eps = 0.0f;
   glm::vec3 delta = velocity;
 
 
@@ -30,7 +58,7 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
 
         if(block != 0) {
           delta.y = ip1.y + 1 - transform.pos.y;
-          physics.velocity.y = 0.0;
+          physics.velocity.y = 0.0f;
           physics.onGround = true;
 
           return;
@@ -46,7 +74,7 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
           char block = world.GetBlock(glm::ivec3(x, ip2.y, z));
           if(block != 0) {
             delta.y = ip2.y - transform.pos.y - aabb.size.y;
-            physics.velocity.y = 0.0;
+            physics.velocity.y = 0.0f;
 
             return;
           }
@@ -68,8 +96,8 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
           char block = world.GetBlock(glm::ivec3(ip1.x, y, z));
 
           if(block != 0) {
-            delta.x = ip1.x + 1 - transform.pos.x;
-            physics.velocity.x = 0.0;
+            delta.x = ip1.x + 1 - transform.pos.x + aabb.size.x / 2.0f + eps;
+            physics.velocity.x = 0.0f;
 
             return;
           }
@@ -85,8 +113,8 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
           char block = world.GetBlock(glm::ivec3(ip2.x, y, z));
 
           if(block != 0) {
-            delta.x = ip2.x - transform.pos.x - aabb.size.x;
-            physics.velocity.x = 0.0;
+            delta.x = ip2.x - transform.pos.x - aabb.size.x / 2.0f - eps;
+            physics.velocity.x = 0.0f;
 
             return;
           }
@@ -110,8 +138,8 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
           char block = world.GetBlock(glm::ivec3(x, y, ip1.z));
 
           if(block != 0) {
-            delta.z = ip1.z + 1 - transform.pos.z;
-            physics.velocity.z = 0.0;
+            delta.z = ip1.z + 1 - transform.pos.z + aabb.size.z / 2.0f + eps;
+            physics.velocity.z = 0.0f;
 
             return;
           }
@@ -127,8 +155,8 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
           char block = world.GetBlock(glm::ivec3(x, y, ip2.z));
 
           if(block != 0) {
-            delta.z = ip2.z - transform.pos.z - aabb.size.z;
-            physics.velocity.z = 0.0;
+            delta.z = ip2.z - transform.pos.z - aabb.size.z / 2.0f - eps;
+            physics.velocity.z = 0.0f;
 
             return;
           }
@@ -137,20 +165,6 @@ void Collide(const BoxCollider& aabb, Transform& transform, PhysicsObject& physi
     }();
 
   }
-  
-  // glm::vec3 delta_abs = glm::abs(delta);
-
-  // float max = std::max(std::max(delta_abs.x, delta_abs.y), delta_abs.z);
-
-  // if(max == delta_abs.x) {
-  //   transform.pos.x += delta.x;
-  // }
-  // else if(max == delta_abs.y) {
-  //   transform.pos.y += delta.y;
-  // }
-  // else if(max == delta_abs.z) {
-  //   transform.pos.z += delta.z;
-  // }
 
   transform.pos += delta;
 }

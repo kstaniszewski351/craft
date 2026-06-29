@@ -3,7 +3,8 @@
     "glm",
     "stb",
     "entt",
-    "nuklear"
+    "nuklear",
+    "freetype"
   ],
   "overrides": [
     {

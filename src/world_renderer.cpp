@@ -1,25 +1,26 @@
 #include "world_renderer.h"
 #include "atlas.h"
-#include "bitmap.h"
-#include "block_registry.h"
 #include "chunk_mesh.h"
 #include "fpv_camera.h"
 #include "frustrum.h"
-#include "shader.h"
-#include "texture.h"
+#include "gfx/shader.h"
+#include "gfx/texture.h"
 #include "world.h"
 #include <algorithm>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
-#include <memory>
 #include <utility>
 #include <vector>
 
-WorldRenderer::WorldRenderer(World& world) : 
+
+
+
+WorldRenderer::WorldRenderer(World& world, const Atlas& atlas) : 
   world_(world),
   chunk_shader_("res/shaders/chunk.frag", "res/shaders/chunk.vert"),
-  atlas_(gBlockRegistry.BuildAtlas())
+  atlas_(atlas),
+  vao_(CHUNK_VERTEX_FORMAT.begin(), CHUNK_VERTEX_FORMAT.end(), sizeof(ChunkVertex))
   {
   //glGenBuffers(1, &model_data_buffer_);
 }
@@ -80,6 +81,7 @@ void WorldRenderer::Draw(const FPVCamera& camera) {
 
   chunk_shader_.Use();
   atlas_.getTexture().Bind(0);
+  vao_.Bind();
 
   for(const auto [_, mesh] : draw_list) {
     //mesh.second->Draw();

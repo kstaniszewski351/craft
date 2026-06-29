@@ -2,6 +2,8 @@
 
 #include "direction.h"
 #include "frustrum.h"
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -12,8 +14,8 @@ struct CameraShaderData {
 };
 
 struct FPVCamera {
-  glm::vec3 position = {0.0f, 0.0f, 0.0f};
-  glm::quat rotation = {1.0f, 0.0f, 0.0f, 0.0f};
+  glm::vec3 position = {};
+  glm::quat rotation = glm::identity<glm::quat>();
 
   float fov = 60.0f;
   float aspect_ratio = 16.0f / 9.0f;

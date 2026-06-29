@@ -1,13 +1,13 @@
 #include "atlas.h"
 #include "bitmap.h"
-#include "texture.h"
+#include "gfx/texture.h"
 #include <cmath>
 
-Texture createTexture(const std::vector<Bitmap>& bitmaps, int tile_size, int pow2_size) {
+GFX::Texture createTexture(const std::vector<Bitmap>& bitmaps, int tile_size, int pow2_size) {
 
   int texture_size = pow2_size * tile_size;
 
-  auto bitmap = Bitmap(texture_size, texture_size, PixelFormat::RGB, PixelType::UInt8);
+  auto bitmap = Bitmap(texture_size, texture_size, bitmaps[0].GetPixelFormat(), bitmaps[0].GetPixelType());
 
 
   for (int index = 0; index < bitmaps.size(); index++) {
@@ -21,9 +21,9 @@ Texture createTexture(const std::vector<Bitmap>& bitmaps, int tile_size, int pow
 
   //uv_size_ = 1.0 / pow2_size_;
   
-  Texture texture = Texture(bitmap, true, Texture::Options {
-    .filter_mode = FilterMode::Nearest,
-    .mipmap_mode = MipmapMode::Linear
+  GFX::Texture texture = GFX::Texture(bitmap, GFX::GetMaxMipmaps(tile_size, tile_size), GFX::Texture::Options {
+    .filter_mode = GFX::Texture::FilterMode::Nearest,
+    .mipmap_mode = GFX::Texture::MipmapMode::Linear
   });
   texture.GenMipmaps();
   return texture;
@@ -43,26 +43,43 @@ Atlas::Atlas(const std::vector<Bitmap>& bitmaps, int tile_size) :
   pow2_size_(findSize(bitmaps.size())),
   uv_size_(1.0f / pow2_size_),
   texture_(createTexture(bitmaps, tile_size_, pow2_size_)) {
-  
-  // for(const auto& [key, texture] : bitmaps) {
-  //   int index = std::distance(bitmaps.begin(), bitmaps.find(key));
-  //   bitmap_indeces_[key] = index;
-  // }
+  size_ = {texture_.GetWidth(), texture_.GetHeight()};
+}
+Atlas::Atlas(GFX::Texture texture, int pow2_size, int tile_size) : 
+  texture_(std::move(texture)),
+  pow2_size_(pow2_size),
+  tile_size_(tile_size),
+  uv_size_(1.0f / pow2_size) {
+
 }
 
 float Atlas::GetTileSize() const {
   return uv_size_;
 }
 
+int Atlas::GetIntegerTileSize() const {
+  return tile_size_;
+}
+
+glm::ivec2 Atlas::GetIntegerUV(int index) const {
+  int x = (index % pow2_size_) * tile_size_;
+  int y = (index / pow2_size_) * tile_size_;
+
+  return glm::ivec2(x, y);
+}
+
+glm::ivec2 Atlas::GetSize() const {
+  return size_;
+}
+
 glm::vec2 Atlas::GetUV(int index) const {
-  //int index = bitmap_indeces_.at(key);
   float x = (float)(index % (pow2_size_)) / (float)pow2_size_;
   float y = (float)(index / (pow2_size_)) / (float)pow2_size_;
 
   return glm::vec2(x, y);
 }
 
-const Texture& Atlas::getTexture() const {
+const GFX::Texture& Atlas::getTexture() const {
   return texture_;
 }
 

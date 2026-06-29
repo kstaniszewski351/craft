@@ -1,18 +1,15 @@
 #pragma once
 
 #include "atlas.h"
-#include "buffer.h"
+#include "gfx/buffer.h"
 #include "chunk.h"
 #include <glm/mat4x4.hpp>
 #include <vector>
 #include "glad/gl.h"
 #include "direction.h"
-#include "vao.h"
+#include "chunk_vertex.h"
 
-struct ChunkVertex {
-  glm::vec3 pos;
-  glm::vec2 uv;
-};
+void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<unsigned int>& triangles);
 
 class ChunkMesh {
  public:
@@ -25,9 +22,7 @@ class ChunkMesh {
  private:
   Chunk& chunk_;
   void addFace(Direction dir, glm::ivec3 pos, char block);
-  Buffer vbo_;
-  Buffer ebo_;
-  VAO vao_;
-  //GLuint vao_;
+  GFX::Buffer vbo_;
+  GFX::Buffer ebo_;
   const Atlas& atlas_;
 };

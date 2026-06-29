@@ -1,5 +1,5 @@
 #include "chunk_gen.h"
-#include "block_registry.h"
+#include "registries.h"
 
 void Generate(Chunk& chunk) {
   auto dirt = gBlockRegistry.GetID("dirt");

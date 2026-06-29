@@ -1,8 +1,8 @@
 #pragma once
 
 #include <entt/entt.hpp>
-#include "../window.h"
-#include "../world.h"
+#include "window.h"
+#include "scene.h"
 
 
-void MovePlayer(entt::registry& reg, Window& window,  World& world, float delta_time);
+void MovePlayer(ECS& reg, Window& window,  Scene& world, float delta_time);

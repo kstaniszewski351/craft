@@ -2,19 +2,18 @@
 
 #include <entt/entity/fwd.hpp>
 #include <entt/entt.hpp>
-#include "../shader.h"
-#include "../buffer.h"
-#include "../vao.h"
+#include "gfx/shader.h"
+#include "gfx/buffer.h"
+#include "gfx/vao.h"
 
 class HitboxRenderer {
  public:
-  HitboxRenderer(entt::registry& reg);
-  void Draw();
+  HitboxRenderer();
+  void Draw(entt::registry& reg);
  private:
-  entt::registry& reg_;
-  Shader shader_; 
-  Buffer vbo_;
-  Buffer ebo_;
-  Buffer ubo_;
-  VAO vao_;
+  GFX::Shader shader_; 
+  GFX::Buffer vbo_;
+  GFX::Buffer ebo_;
+  GFX::Buffer ubo_;
+  GFX::VAO vao_;
 };

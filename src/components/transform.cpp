@@ -1,8 +1,6 @@
 #include "transform.h"
+#include <glm/ext/matrix_float4x4.hpp>
 
 glm::mat4 Transform::GetMat() {
-  glm::mat4 mat = glm::mat4_cast(rotation);
-  mat = glm::translate(mat, pos);
-
-  return mat;
+  return  glm::translate(glm::identity<glm::mat4>(), pos);
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "ray.h"
 #include <glm/ext/vector_int3.hpp>
 #include <optional>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -25,7 +26,7 @@ class World {
     void UnloadChunk(glm::ivec2 chunk_pos);
     static glm::ivec2 GetChunkPos(glm::ivec3 pos);
     static glm::ivec3 GetChunkBlockPos(glm::ivec3 pos);
-    std::optional<RaycastResult> Raycast(glm::vec3 pos, glm::vec3 dir, float max_lenght);
+    std::optional<RaycastResult> Raycast(Ray ray);
     std::unordered_map<glm::ivec2, Chunk>& GetChunks();
   private:
     //char* getBlockPtr(glm::ivec3 pos);

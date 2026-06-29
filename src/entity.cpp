@@ -1,7 +1,8 @@
 #include "entity.h"
+#include "ecs.h"
 #include <entt/entity/fwd.hpp>
 
-Entity::Entity(entt::registry* reg, entt::entity ent)
- : reg_(reg), ent_(ent) {
+Entity::Entity(ECS* ecs, entt::entity ent)
+ : ecs_(ecs), ent_(ent) {
 
 }

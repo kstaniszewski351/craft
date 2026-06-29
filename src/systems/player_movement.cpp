@@ -1,39 +1,40 @@
 #include "player_movement.h"
-#include "../components/physics_object.h"
-#include "../components/box_collider.h"
-#include "../components/transform.h"
-#include "../components/view.h"
-#include "../components/player_controller.h"
+#include "components/physics_object.h"
+#include "components/box_collider.h"
+#include "components/transform.h"
+#include "components/view.h"
+#include "components/player_controller.h"
+#include "components/inventory.h"
 #include <SDL3/SDL_scancode.h>
 #include <glm/ext/scalar_constants.hpp>
-#include "../input_manager.h"
-#include "../direction.h"
-#include "../world.h"
+#include "input_manager.h"
+#include "direction.h"
+#include "world.h"
 #include <SDL3/SDL_mouse.h>
 
 
 
-bool DoesCollide(glm::vec3 p1, glm::vec3 p2, glm::ivec3 pos) {
-  glm::ivec3 ip1 = glm::floor(p1);
-  glm::ivec3 ip2 = glm::floor(p2);
+// bool DoesCollide(glm::vec3 p1, glm::vec3 p2, glm::ivec3 pos) {
+//   glm::ivec3 ip1 = glm::floor(p1);
+//   glm::ivec3 ip2 = glm::floor(p2);
 
-  if(pos.x >= ip1.x && pos.x <= ip2.x 
-    && pos.y >= ip1.y && pos.y <= ip2.y
-    && pos.z >= ip1.z && pos.z <= ip2.z) {
-    return true;
-  }
-  return false;
-}
+//   if(pos.x >= ip1.x && pos.x <= ip2.x 
+//     && pos.y >= ip1.y && pos.y <= ip2.y
+//     && pos.z >= ip1.z && pos.z <= ip2.z) {
+//     return true;
+//   }
+//   return false;
+// }
 
-void MovePlayer(entt::registry& reg, Window& window, World& world, float delta_time) {
-  auto entt_view = reg.view<Transform, BoxCollider, PhysicsObject, View, PlayerController>();
+void MovePlayer(ECS& ecs, Window& window, Scene& scene, float delta_time) {
+  auto& reg = ecs.GetReg();
+  auto entt_view = reg.view<Transform, BoxCollider, PhysicsObject, View, PlayerController, Inventory>();
+  auto& input_manager = Game::Get().GetInputManager();
 
-  for(auto [entity, transform, box, physics, view, player_controller] : entt_view.each()) {
-
-
-
+  for(auto [entity, transform, box, physics, view, player_controller, inventory] : entt_view.each()) {
+    
     //camera rotation
-    glm::vec2 mouse_motion = window.GetRelativeMousePos(gInputManager.GetMouseDelta());
+    glm::vec2 mouse_motion = window.GetRelativeMousePos(input_manager.GetMouseDelta());
     mouse_motion /= 0.5f;
     mouse_motion += 0.5f;
     mouse_motion = glm::mix(glm::vec2(-1.0f), glm::vec2(1.0f), mouse_motion);
@@ -56,11 +57,11 @@ void MovePlayer(entt::registry& reg, Window& window, World& world, float delta_t
 
     if(keyboard_state[SDL_SCANCODE_LSHIFT]) {
       box.size = glm::vec3(0.8, 1.4, 0.8);
-      view.zOffset = 1.2;
+      view.yOffset = 1.2;
     }
     else {
       box.size = glm::vec3(0.8, 1.8, 0.8);
-      view.zOffset = 1.6;
+      view.yOffset = 1.6;
     }
 
     if(keyboard_state[SDL_SCANCODE_SPACE] && physics.onGround) {
@@ -89,20 +90,25 @@ void MovePlayer(entt::registry& reg, Window& window, World& world, float delta_t
       physics.velocity += xz_vector * 30.0f * delta_time;
     }
 
-    glm::vec3 eyes_pos = transform.pos + glm::vec3(box.size.x, 0, box.size.z) / glm::vec3(2)  + glm::vec3(0, view.zOffset, 0);
+    //update invetory
 
-    if(gInputManager.GetMouseDowns()[SDL_BUTTON_RIGHT] == true) {
-      auto raycast = world.Raycast(eyes_pos, view.rotation * direction_vectors[Front], 4);
-
-      if(raycast && !DoesCollide(transform.pos, transform.pos + box.size, raycast->pos + raycast->face)) {
-        world.SetBlock(raycast->pos + raycast->face, 1);
+    for(int i = SDL_SCANCODE_1; i <= SDL_SCANCODE_9; i++) {
+      if(keyboard_state[i]) {
+        inventory.active_slot = i - SDL_SCANCODE_1;
       }
     }
-    if(gInputManager.GetMouseDowns()[SDL_BUTTON_LEFT]) {
-      auto raycast = world.Raycast(eyes_pos, view.rotation * direction_vectors[Front], 4);
 
+    //place blocks
+    if(input_manager.GetMouseDowns()[SDL_BUTTON_RIGHT]) {
+      auto& active_item = inventory.slots[inventory.active_slot];
+      if(active_item.has_value()) {
+        active_item->item->OnUse(scene.GetWorld(), Entity(&ecs, entity));
+      }
+    }
+    if(input_manager.GetMouseDowns()[SDL_BUTTON_LEFT]) {
+      auto raycast = scene.GetWorld().Raycast(view.GetRay(transform.pos));
       if(raycast) {
-        world.SetBlock(raycast->pos, 0);
+        scene.GetWorld().SetBlock(raycast->pos, 0);
       }
     }
   }

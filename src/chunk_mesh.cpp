@@ -3,15 +3,10 @@
 #include <glm/ext/matrix_transform.hpp>
 #include "chunk_mesh.h"
 #include "atlas.h"
-#include "block_registry.h"
-#include "buffer.h"
+#include "registries.h"
+#include "gfx/buffer.h"
 #include "chunk.h"
-#include "vao.h"
-
-constexpr std::array<VAO::Attrib, 2> CHUNK_VERTEX_FORMAT {{
-  {3, GL_FLOAT, offsetof(ChunkVertex, pos)},
-  {2, GL_FLOAT, offsetof(ChunkVertex, uv)}
-}};
+#include "chunk_vertex.h"
 
 constexpr std::array<float, 12> BLOCK_FACE_UP = {
   0.0f, 1.0f, 0.0f,
@@ -70,6 +65,15 @@ constexpr std::array<float, 12> BLOCK_FACE_EAST = {
   1.0f, 0.0f, 1.0f,
 };
 
+constexpr std::array<const std::array<float, 12>*, 6> BLOCK_FACES {
+  &BLOCK_FACE_UP,
+  &BLOCK_FACE_DOWN,
+  &BLOCK_FACE_WEST,
+  &BLOCK_FACE_EAST,
+  &BLOCK_FACE_NORTH,
+  &BLOCK_FACE_SOUTH
+};
+
 constexpr std::array<unsigned int, 6> BLOCK_FACE_TRIANGLES = {
   0, 1, 3,
   0, 3, 2
@@ -77,7 +81,6 @@ constexpr std::array<unsigned int, 6> BLOCK_FACE_TRIANGLES = {
 
 ChunkMesh::ChunkMesh(Chunk& chunk, const Atlas& atlas)
   : chunk_(chunk),
-    vao_(CHUNK_VERTEX_FORMAT.begin(), CHUNK_VERTEX_FORMAT.end(), sizeof(ChunkVertex)),
     atlas_(atlas) {
   Update();
 }
@@ -149,44 +152,24 @@ void ChunkMesh::Draw() {
     return;
   }
 
-  vao_.Bind();
   ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
   vbo_.BindVertexBuffer(0, 0, sizeof(ChunkVertex));
   glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(triangles.size()), GL_UNSIGNED_INT, 0);
 }
 
-void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block_id) {
+void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block) {
+  addBlockFace(dir, {pos.x + 16 * chunk_.GetPos().x, pos.y, pos.z + 16 * chunk_.GetPos().y}, block, atlas_, vertices, triangles);
+}
 
-  const std::array<float, 12>* face;
+void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<unsigned int>& triangles) {
 
-  switch (dir) {
-    case Up:
-      face = &BLOCK_FACE_UP;
-      break;
-    case Down:
-      face = &BLOCK_FACE_DOWN;
-      break;
-    case Front:
-      face = &BLOCK_FACE_NORTH;
-      break;
-    case Back:
-      face = &BLOCK_FACE_SOUTH;
-      break;
-    case Left:
-      face = &BLOCK_FACE_WEST;
-      break;
-    case Right:
-      face = &BLOCK_FACE_EAST;
-      break;
-    default:
-      return;
-  }
+  const std::array<float, 12>* face = BLOCK_FACES[dir];
 
-  const Block& block = gBlockRegistry.GetBlock(block_id);
+  const Block& block = gBlockRegistry.Get(block_id);
 
-  float uv_scale = atlas_.GetTileSize();
-  glm::ivec2 chunk_pos = chunk_.GetPos();
-  glm::vec2 uv_offset = atlas_.GetUV(block.GetTexture(dir));
+  float uv_scale = atlas.GetTileSize();
+  //glm::ivec2 chunk_pos = chunk.GetPos();
+  glm::vec2 uv_offset = atlas.GetUV(block.GetTexture(dir));
 
   int rot = 0;
   if(block.RandomRotate(dir)) {
@@ -205,7 +188,7 @@ void ChunkMesh::addFace(Direction dir, glm::ivec3 pos, char block_id) {
     uv += uv_offset;
 
     ChunkVertex vertex {
-      .pos = glm::vec3(vert_x + chunk_pos.x * 16, vert_y , vert_z  + chunk_pos.y * 16),
+      .pos = glm::vec3(vert_x, vert_y , vert_z),
       .uv = uv
     };
     vertices.push_back(vertex);

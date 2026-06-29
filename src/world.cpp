@@ -1,5 +1,6 @@
 #include "world.h"
 #include "chunk.h"
+#include "ray.h"
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <glm/ext/vector_int3.hpp>
@@ -147,18 +148,18 @@ float PlaneIntersect(float o, float d) {
   // }
 }
 
-std::optional<RaycastResult> World::Raycast(glm::vec3 pos, glm::vec3 dir, float max_lenght) {
+std::optional<RaycastResult> World::Raycast(Ray ray) {
   glm::ivec3 step;
-  step.x = dir.x >= 0 ? glm::ceil(dir.x) : glm::floor(dir.x);
-  step.y = dir.y >= 0 ? glm::ceil(dir.y) : glm::floor(dir.y);
-  step.z = dir.z >= 0 ? glm::ceil(dir.z) : glm::floor(dir.z);
-  glm::ivec3 ipos = glm::floor(pos);
+  step.x = ray.dir.x >= 0 ? glm::ceil(ray.dir.x) : glm::floor(ray.dir.x);
+  step.y = ray.dir.y >= 0 ? glm::ceil(ray.dir.y) : glm::floor(ray.dir.y);
+  step.z = ray.dir.z >= 0 ? glm::ceil(ray.dir.z) : glm::floor(ray.dir.z);
+  glm::ivec3 ipos = glm::floor(ray.pos);
   glm::vec3 t_max;
-  t_max.x = PlaneIntersect(pos.x, dir.x);
-  t_max.y = PlaneIntersect(pos.y, dir.y);
-  t_max.z = PlaneIntersect(pos.z, dir.z);
+  t_max.x = PlaneIntersect(ray.pos.x, ray.dir.x);
+  t_max.y = PlaneIntersect(ray.pos.y, ray.dir.y);
+  t_max.z = PlaneIntersect(ray.pos.z, ray.dir.z);
 
-  glm::vec3 t_delta = glm::abs(glm::vec3(1.0) / dir);
+  glm::vec3 t_delta = glm::abs(glm::vec3(1.0) / ray.dir);
   glm::ivec3 place_dir = glm::ivec3(0);
 
   while(true) {
@@ -171,7 +172,7 @@ std::optional<RaycastResult> World::Raycast(glm::vec3 pos, glm::vec3 dir, float 
 
     if(t_max.x < t_max.y) {
       if(t_max.x < t_max.z) {
-        if(t_max.x > max_lenght) {
+        if(t_max.x > ray.length) {
           break;
         }
         t_max.x += t_delta.x;
@@ -179,7 +180,7 @@ std::optional<RaycastResult> World::Raycast(glm::vec3 pos, glm::vec3 dir, float 
         place_dir = glm::ivec3(-step.x, 0, 0);
       }
       else {
-        if(t_max.z > max_lenght) {
+        if(t_max.z > ray.length) {
           break;
         }
         t_max.z += t_delta.z;
@@ -189,7 +190,7 @@ std::optional<RaycastResult> World::Raycast(glm::vec3 pos, glm::vec3 dir, float 
     }
     else {
       if(t_max.y < t_max.z) {
-        if(t_max.y > max_lenght) {
+        if(t_max.y > ray.length) {
           break;
         }
         t_max.y += t_delta.y;
@@ -197,7 +198,7 @@ std::optional<RaycastResult> World::Raycast(glm::vec3 pos, glm::vec3 dir, float 
         place_dir = glm::ivec3(0, -step.y, 0);
       }
       else {
-        if(t_max.z > max_lenght) {
+        if(t_max.z > ray.length) {
           break;
         }
         t_max.z += t_delta.z;

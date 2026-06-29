@@ -8,15 +8,26 @@ void InputManager::Update() {
 }
 
 void InputManager::HandleEvent(const SDL_Event& event) {
-  if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-    auto& m_event = event.button;
+  switch(event.type) {
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+      mouse_[event.button.button] += 1;
+      break;
+    case SDL_EVENT_KEY_DOWN:
+      keyboard_[event.key.scancode] = true;
+      break;
+  }
+  // if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+  //   auto& m_event = event.button;
 
-    mouse_[m_event.button] = true; 
-  }
-  if(event.type == SDL_EVENT_KEY_DOWN) {
-    auto& k_event = event.key;
-    keyboard_[k_event.scancode] = true;
-  }
+  //   mouse_[m_event.button] = true; 
+  // }
+  // if(event.type == SDL_EVENT_KEY_DOWN) {
+  //   auto& k_event = event.key;
+  //   keyboard_[k_event.scancode] = true;
+  // }
+  // if(event.type == SDL_EVENT_MOUSE_WHEEL) {
+
+  // }
 }
 
 void InputManager::EndFrame() {
@@ -41,6 +52,3 @@ const Mouse& InputManager::GetMouseDowns() const {
 const Keyboard& InputManager::GetKeyboardDowns() const {
   return keyboard_;
 }
-
-
-InputManager gInputManager;

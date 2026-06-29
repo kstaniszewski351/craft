@@ -25,5 +25,3 @@ class InputManager {
   bool mouse_l;
   bool mouse_r;
 };
-
-extern InputManager gInputManager;

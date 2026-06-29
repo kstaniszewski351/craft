@@ -2,7 +2,14 @@
 #include "atlas_builder.h"
 #include "direction.h"
 
-UniformBlock::UniformBlock(std::string texture) : texture_path_(texture) {
+Block::Block(Properties props) :
+  props_(props) {
+
+}
+
+UniformBlock::UniformBlock(std::string texture, Properties props) :
+  Block(props),
+  texture_path_(texture) {
 
 }
 
@@ -18,7 +25,8 @@ bool UniformBlock::RandomRotate(Direction dir) const {
   return true;
 }
 
-LogBlock::LogBlock(std::string top, std::string sides) :
+LogBlock::LogBlock(std::string top, std::string sides, Properties props) :
+  Block(props),
   top_path_(top),
   side_path_(sides) {
 }
@@ -37,8 +45,11 @@ int LogBlock::GetTexture(Direction dir) const {
   }
 }
 
-GrassBlock::GrassBlock(std::string top, std::string bottom, std::string sides)
- : top_path_(top), bottom_path_(bottom), side_path_(sides) {
+GrassBlock::GrassBlock(std::string top, std::string bottom, std::string sides, Properties props) :
+  Block(props),
+  top_path_(top),
+  bottom_path_(bottom),
+  side_path_(sides) {
 
  }
 

@@ -2,8 +2,8 @@
 #include "bitmap.h"
 #include "glad/gl.h"
 #include "input_manager.h"
-#include "shader.h"
-#include "texture.h"
+#include "gfx/shader.h"
+#include "gfx/texture.h"
 #include <SDL3/SDL_stdinc.h>
 #include <cstddef>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -15,7 +15,7 @@ struct GUIVertex {
   std::array<unsigned char, 4> color;
 };
 
-constexpr std::array<VAO::Attrib, 3> GUI_VERTEX_FORMAT {{
+constexpr std::array<GFX::VAO::Attrib, 3> GUI_VERTEX_FORMAT {{
   {2, GL_FLOAT, offsetof(GUIVertex, pos)},
   {2, GL_FLOAT, offsetof(GUIVertex, uv)},
   {4, GL_UNSIGNED_BYTE, offsetof(GUIVertex, color), true}
@@ -31,7 +31,7 @@ constexpr std::array<nk_draw_vertex_layout_element, 4> VERTEX_LAYOUT {{
 Bitmap GUI::setupAtlas() {
   nk_font_atlas_init_default(&atlas_);
   nk_font_atlas_begin(&atlas_);
-  font_ = nk_font_atlas_add_default(&atlas_, 20, 0);
+  font_ = nk_font_atlas_add_default(&atlas_, 50, 0);
   int w, h;
   const void* img = nk_font_atlas_bake(&atlas_, &w, &h, NK_FONT_ATLAS_RGBA32);
   Bitmap bitmap(w, h, img, PixelFormat::RGBA, PixelType::UInt8);
@@ -42,7 +42,15 @@ GUI::GUI()
 : vao_(GUI_VERTEX_FORMAT.begin(),
   GUI_VERTEX_FORMAT.end(),
   sizeof(GUIVertex)),
-  atlas_texture_(setupAtlas(), false),
+  atlas_texture_(
+    setupAtlas(),
+    1,
+    {
+      GFX::Texture::FilterMode::Nearest,
+      GFX::Texture::MipmapMode::Disabled,
+      GFX::Texture::WrapMode::Repeat
+    }
+  ),
   shader_("res/shaders/gui.frag", "res/shaders/gui.vert") 
   {
   atlas_texture_.GenMipmaps();
@@ -181,7 +189,7 @@ void GUI::Draw(float delta_time, Window& window) {
   glDisable(GL_DEPTH_TEST);
   nk_draw_foreach(cmd, &ctx_, &cmd_buf_) {
     if(!cmd->elem_count) continue;
-    Texture* t = (Texture*)cmd->texture.ptr;
+    GFX::Texture* t = (GFX::Texture*)cmd->texture.ptr;
     glScissor(cmd->clip_rect.x, window_size.y - (cmd->clip_rect.y + cmd->clip_rect.h), cmd->clip_rect.w, cmd->clip_rect.h);
     t->Bind(0);
     vao_.Bind();

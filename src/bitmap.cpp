@@ -2,7 +2,7 @@
 
 #include <stb_image.h>
 #include <stb_image_resize2.h>
-#include <memory>
+#include <stb_image_write.h>
 #include <cstdlib>
 #include <array>
 #include <algorithm>
@@ -20,10 +20,9 @@ Bitmap::Bitmap(const std::string& path, PixelFormat pixel_format, PixelType pixe
   int n_channels;
   int desired_channels = 0;
 
-  if(pixel_format != PixelFormat::Default) {
-    desired_channels = (int)pixel_format + 1;
-    pixel_format_ = pixel_format;
-  }
+  desired_channels = (int)pixel_format + 1;
+  pixel_format_ = pixel_format;
+  
   switch(pixel_type) {
     case PixelType::UInt8:
      data_ = stbi_load(path.c_str(), &width_, &height_, &n_channels, desired_channels);
@@ -34,41 +33,42 @@ Bitmap::Bitmap(const std::string& path, PixelFormat pixel_format, PixelType pixe
     case PixelType::Float16:
      data_ = stbi_loadf(path.c_str(), &width_, &height_, &n_channels, desired_channels);
      break;
-    case PixelType::Default:
-     throw std::runtime_error("not implemented");
   }
   if(data_ == NULL) {
     throw std::runtime_error(std::string("Failed to load image: ") + path + " reason: " + stbi_failure_reason());
   }
 
-  if(pixel_format == PixelFormat::Default) {
-    pixel_format_ = (PixelFormat)(n_channels - 1);
-  };
+
   pixel_type_ = pixel_type;
 }
 
 Bitmap::Bitmap(int width, int height, PixelFormat format, PixelType pixel_type)
     : width_(width), height_(height), pixel_format_(format), pixel_type_(pixel_type) {
-  int n_channels = (int)format + 1;
-  int bytes_per_pixel = pixel_type_sizes[(int)pixel_type] * n_channels;
-  data_ = std::malloc(width * height * bytes_per_pixel);
-  if(data_ == nullptr) {
-    throw std::runtime_error("Failed to allocate memory for bitmap");
-  }
-  std::memset(data_, 0, width * height * bytes_per_pixel);
+
+
+  auto size = GetSize();
+  data_ = std::malloc(size);
+  std::memset(data_, 0, size);
 }
 
-Bitmap::Bitmap(int width, int height, const void* data, PixelFormat format, PixelType pixel_type)
+Bitmap::Bitmap(int width, int height, void* data, PixelFormat format, PixelType pixel_type, bool owns)
 : width_(width),
   height_(height),
   pixel_format_(format),
-  pixel_type_(pixel_type) {
+  pixel_type_(pixel_type),
+  owns_(owns) {
+  if(data == nullptr) {
+    throw std::runtime_error("data is nullptr");
+  }
   
-  int n_channels = (int)pixel_format_ + 1;
-  int bytes_per_pixel = pixel_type_sizes[(int)pixel_type_] * n_channels;
-  int total_bytes = width_ * height_ * bytes_per_pixel;
-  data_ = std::malloc(width * height * bytes_per_pixel);
-  std::memcpy(data_, data, total_bytes);
+  if(owns) {
+    auto size = GetSize();
+    data_ = std::malloc(width * height * size);
+    std::memcpy(data_, data, size);
+  }
+  else {
+    data_ = data;
+  }
 };
 
 
@@ -91,56 +91,67 @@ Bitmap::Bitmap(int x, int y, int w, int h, const Bitmap& bitmap) : width_(w), he
 }
 
 Bitmap::~Bitmap() {
-  std::free(data_);
+  if(owns_) {
+    std::free(data_);
+  }
 }
 
 Bitmap::Bitmap(const Bitmap& other) 
     : width_(other.width_), height_(other.height_), 
-      pixel_format_(other.pixel_format_), pixel_type_(other.pixel_type_) {
-  int n_channels = (int)other.pixel_format_ + 1;
-  int bytes_per_pixel = pixel_type_sizes[(int)other.pixel_type_] * n_channels;
-  int total_bytes = width_ * height_ * bytes_per_pixel;
-  data_ = std::malloc(total_bytes);
-  if(data_ == nullptr) {
-    throw std::runtime_error("Failed to allocate memory for bitmap copy");
+      pixel_format_(other.pixel_format_), pixel_type_(other.pixel_type_), owns_(other.owns_) {
+  
+
+  if(owns_) {
+    auto size = other.GetSize();
+    data_ = std::malloc(size);
+    std::memcpy(data_, other.data_, size);
   }
-  std::memcpy(data_, other.data_, total_bytes);
+  else {
+    data_ = other.data_;
+  }
 }
 
 Bitmap& Bitmap::operator=(const Bitmap& other) {
   if(this != &other) {
-    std::free(data_);
+    if(owns_) {
+      std::free(data_);
+    }
     width_ = other.width_;
     height_ = other.height_;
     pixel_format_ = other.pixel_format_;
     pixel_type_ = other.pixel_type_;
+    owns_ = other.owns_;
     
-    int n_channels = (int)other.pixel_format_ + 1;
-    int bytes_per_pixel = pixel_type_sizes[(int)other.pixel_type_] * n_channels;
-    int total_bytes = width_ * height_ * bytes_per_pixel;
-    data_ = std::malloc(total_bytes);
-    if(data_ == nullptr) {
-      throw std::runtime_error("Failed to allocate memory for bitmap copy assignment");
+
+    if(other.owns_) {
+      auto size = other.GetSize();
+      data_ = std::malloc(size);
+      std::memcpy(data_, other.data_, size);
     }
-    std::memcpy(data_, other.data_, total_bytes);
+    else {
+      data_ = other.data_;
+    }
   }
   return *this;
 }
 
 Bitmap::Bitmap(Bitmap&& other) noexcept
     : data_(other.data_), width_(other.width_), height_(other.height_),
-      pixel_format_(other.pixel_format_), pixel_type_(other.pixel_type_) {
+      pixel_format_(other.pixel_format_), pixel_type_(other.pixel_type_), owns_(other.owns_) {
   other.data_ = nullptr;
 }
 
 Bitmap& Bitmap::operator=(Bitmap&& other) noexcept {
   if(this != &other) {
-    std::free(data_);
+    if(owns_) {
+      std::free(data_);
+    } 
     data_ = other.data_;
     width_ = other.width_;
     height_ = other.height_;
     pixel_format_ = other.pixel_format_;
     pixel_type_ = other.pixel_type_;
+    owns_ = other.owns_;
     other.data_ = nullptr;
   }
   return *this;
@@ -174,7 +185,7 @@ const void* Bitmap::GetPixels() const {
 }
 
 void Bitmap::DrawBitmap(int x, int y, const Bitmap& bitmap) {
-  // Pixel formats and types must match
+
   if(pixel_format_ != bitmap.pixel_format_ || pixel_type_ != bitmap.pixel_type_) {
     throw std::runtime_error("Source and destination bitmaps must have the same pixel format and type");
   }
@@ -182,21 +193,18 @@ void Bitmap::DrawBitmap(int x, int y, const Bitmap& bitmap) {
   int n_channels = (int)pixel_format_ + 1;
   int bytes_per_pixel = pixel_type_sizes[(int)pixel_type_] * n_channels;
 
-  // Copy row by row
   for(int row = 0; row < bitmap.height_; row++) {
     int dest_y = y + row;
 
-    // Skip if destination row is outside bounds
     if(dest_y < 0 || dest_y >= height_) {
       continue;
     }
 
-    // Calculate how many columns can be copied (handle x offset clipping)
     int start_col = std::max(0, -x);
     int end_col = std::min(bitmap.width_, width_ - x);
 
     if(start_col >= end_col) {
-      continue; // Nothing to copy in this row
+      continue;
     }
 
     int copy_width = end_col - start_col;
@@ -208,4 +216,18 @@ void Bitmap::DrawBitmap(int x, int y, const Bitmap& bitmap) {
 
     std::memcpy(dst_ptr, src_ptr, copy_width * bytes_per_pixel);
   }
+}
+
+// void Bitmap::Save(std::string path) const {
+//   if(pixel_type_ != PixelType::UInt8) {
+//     throw std::runtime_error("Unsupported format");
+//   }
+//   stbi_write_png(path.c_str(), width_, height_, int comp, data_, GetStride());
+// }
+
+std::size_t Bitmap::GetSize() const {
+  int n_channels = (int)pixel_format_ + 1;
+  int bytes_per_pixel = pixel_type_sizes[(int)pixel_type_] * n_channels;
+  int total_bytes = width_ * height_ * bytes_per_pixel;
+  return total_bytes;
 }
