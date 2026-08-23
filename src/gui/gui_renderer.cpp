@@ -1,11 +1,13 @@
 #include "gui_renderer.h"
-#include "gfx/buffer.h"
-#include "gfx/texture.h"
-#include "gfx/vao.h"
+#include "bgfx/bgfx.h"
+#include "game.h"
 #include <array>
 #include <cstddef>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <memory>
+#include "gui/text.h"
+#include "shader_manager.h"
 #include "widget.h"
 
 
@@ -14,63 +16,82 @@
 namespace GUI {
 
 
-
-  constexpr std::array<GFX::VAO::Attrib, 2> QUAD_VERTEX_FORMAT {{
-    {2, GL_FLOAT, 0, false, 0},
-    {2, GL_FLOAT, 0, false, 1}
-  }};
-
-  constexpr std::array<GFX::VAO::Attrib, 2> TEXT_VERTEX_FORMAT {{
-    {2, GL_FLOAT, 0},
-    {2, GL_FLOAT, offsetof(QuadVertex, uv)}
-  }};
-
-  GUIRenderer::GUIRenderer() :
-    rect_vao_(QUAD_VERTEX_FORMAT.begin(), QUAD_VERTEX_FORMAT.end(), 0),
-    rect_shader_("res/shaders/rect.frag", "res/shaders/rect.vert"),
-    text_shader_("res/shaders/text.frag", "res/shaders/text.vert"),
-    text_vao_(TEXT_VERTEX_FORMAT.begin(), TEXT_VERTEX_FORMAT.end(), sizeof(QuadVertex)) {
+  GUIRenderer::GUIRenderer() {
     
-    rect_ebo_.Data(sizeof(QUAD_TRIANGLES), QUAD_TRIANGLES.data());
-    rect_vbo_.Data(sizeof(QUAD_VERTS), QUAD_VERTS.data());
+    bgfx::VertexLayout quad_layout;
+    quad_layout.begin()
+      .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+    .end();
+
+    text_layout_ = bgfx::VertexLayout();
+    text_layout_.begin()
+      .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float)
+      .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+    .end();
+
+    rect_vertex_buf_ = bgfx::createVertexBuffer(
+      bgfx::makeRef(QUAD_VERTS.data(),
+      QUAD_VERTS.size() * sizeof(glm::vec2)),
+      quad_layout
+    );
+    rect_index_buf_ = bgfx::createIndexBuffer(
+      bgfx::makeRef(QUAD_TRIANGLES.data(),
+      QUAD_TRIANGLES.size() * sizeof(uint16_t))
+    );
+
+    ShaderManager& shader_manager = Game::Get().GetShaderManager();
+
+    rect_shader_ = shader_manager.LoadProgram("rect_vs.sc", "rect_fs.sc");
+    text_shader_ = shader_manager.LoadProgram("text_vs.sc", "text_fs.sc");
+
+    s_text_atlas_ = bgfx::createUniform("s_textAtlas", bgfx::UniformType::Sampler);
+    s_image_ = bgfx::createUniform("s_image", bgfx::UniformType::Sampler);
+    u_transform = bgfx::createUniform("u_transofrm", bgfx::UniformType::Vec4);
+    u_uv_ = bgfx::createUniform("u_uv", bgfx::UniformType::Vec4);
   };
+
+  Text* GUIRenderer::CreateText(std::string text, glm::ivec2 pos, Font* font) {
+    return new Text(text, pos, font, text_layout_);
+  }
 
   void GUIRenderer::Draw(Widget& root, const Window& window) {
     glm::vec2 window_size = window.GetSize();
     glm::mat4 proj_mat = glm::ortho(0.0f, (float)window_size.x, (float)window_size.y, 0.0f);
 
-
-    glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
-    rect_shader_.SetUniform(0, proj_mat);
-    text_shader_.SetUniform(0, proj_mat);
+    bgfx::setState(BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_NEVER | BGFX_STATE_MSAA);
+    //set projection matrix
     root.Draw(*this);
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
   }
 
-  void GUIRenderer::DrawImage(glm::ivec2 pos, glm::ivec2 size, const GFX::Texture& texture, const GFX::Buffer& uv) {
-    rect_shader_.Use();
-    rect_vao_.Bind();
-    rect_vbo_.BindVertexBuffer(0, 0, sizeof(glm::vec2));
-    uv.BindVertexBuffer(1, 0, sizeof(glm::vec2));
-    rect_ebo_.Bind(GL_ELEMENT_ARRAY_BUFFER);
-    texture.Bind(0);
-    glm::vec2 s = size;
-    glm::vec2 p = pos;
-    rect_shader_.SetUniform(1, p);
-    rect_shader_.SetUniform(2, s);
+  void GUIRenderer::DrawImage(glm::ivec2 pos, glm::ivec2 size, bgfx::TextureHandle texture, glm::vec2 uv_offset, glm::vec2 uv_scale) {
+    bgfx::setIndexBuffer(rect_index_buf_);
+    bgfx::setVertexBuffer(0, rect_vertex_buf_);
+    bgfx::setTexture(0, s_image_, texture);
 
-    glDrawElements(GL_TRIANGLES, QUAD_TRIANGLES.size(), GL_UNSIGNED_INT, 0);
+    glm::vec4 transform = {pos, size};
+    glm::vec4 uv = {uv_offset, uv_scale};
+    bgfx::setUniform(u_transform, &transform);
+    bgfx::setUniform(u_uv_, &uv);
+
+    bgfx::submit(0, rect_shader_);
   }
 
-  void GUIRenderer::DrawText(const GFX::Texture& texture, const GFX::Buffer& vbo, const GFX::Buffer& ebo, int count) {
-    text_shader_.Use();
-    text_vao_.Bind();
-    ebo.Bind(GL_ELEMENT_ARRAY_BUFFER);
-    vbo.BindVertexBuffer(0, 0, sizeof(QuadVertex));
-    texture.Bind(0);
+  void GUIRenderer::DrawText(bgfx::TextureHandle texture, bgfx::VertexBufferHandle vertex_buf, bgfx::IndexBufferHandle index_buf, int count) {
+    bgfx::setVertexBuffer(0, vertex_buf);
+    bgfx::setIndexBuffer(index_buf);
+    bgfx::setTexture(0, s_text_atlas_, texture);
 
-    glDrawElements(GL_TRIANGLES, count * QUAD_TRIANGLES.size(), GL_UNSIGNED_INT, 0);
+    bgfx::submit(0, text_shader_);
+  }
+
+  GUIRenderer::~GUIRenderer() {
+    bgfx::destroy(rect_shader_);
+    bgfx::destroy(text_shader_);
+    bgfx::destroy(rect_vertex_buf_);
+    bgfx::destroy(rect_index_buf_);
+    bgfx::destroy(s_text_atlas_);
+    bgfx::destroy(s_image_);
+    bgfx::destroy(u_uv_);
+    bgfx::destroy(u_transform);
   }
 }

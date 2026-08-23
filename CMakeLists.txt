@@ -1,6 +1,7 @@
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 set(CMAKE_CXX_STANDARD 20)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory -fsanitize-recover=memory -fno-omit-frame-pointer")
 # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=memory")
 
@@ -18,25 +19,36 @@ find_package(unofficial-nuklear CONFIG REQUIRED)
 find_package(Freetype REQUIRED)
 
 FetchContent_Declare(
-  glad
-  GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-  GIT_TAG v2.0.8
-  SOURCE_SUBDIR	cmake
+  bgfx
+  GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git
+  GIT_TAG v1.146.9317-553
 )
-# FetchContent_Declare(
-#   nuklear
-#   GIT_REPOSITORY https://github.com/Immediate-Mode-UI/Nuklear.git
-#   GIT_TAG v4.13.3
-# )
+FetchContent_MakeAvailable(
+  bgfx
+)
 
-FetchContent_MakeAvailable(glad)
+file(CREATE_LINK ${CMAKE_SOURCE_DIR}/res ${CMAKE_BINARY_DIR}/res SYMBOLIC)
 
-glad_add_library(glad STATIC API gl:core=4.6)
+
+bgfx_compile_shaders(
+  TYPE VERTEX
+  INCLUDE_DIRS ${BGFX_DIR}/src
+  SHADERS shaders/chunk_vs.sc shaders/debug_vs.sc shaders/rect_vs.sc shaders/text_vs.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/shaders
+)
+
+bgfx_compile_shaders(
+  TYPE FRAGMENT
+  INCLUDE_DIRS ${BGFX_DIR}/src  
+  SHADERS shaders/chunk_fs.sc shaders/debug_fs.sc shaders/rect_fs.sc shaders/text_fs.sc
+  VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+  OUTPUT_DIR ${CMAKE_BINARY_DIR}/shaders
+)
 
 add_executable(main
   src/main.cpp
-  src/gfx/shader.cpp
-  src/text_file.cpp
+  src/file.cpp
   src/camera_controller.cpp
   src/chunk_mesh.cpp
   src/chunk.cpp
@@ -45,8 +57,6 @@ add_executable(main
   src/world.cpp
   src/atlas.cpp
   src/bitmap.cpp
-  src/gfx/texture.cpp
-  src/gfx/buffer.cpp
   src/scene.cpp
   src/systems/hitbox_renderer.cpp
   src/systems/physics.cpp
@@ -58,14 +68,11 @@ add_executable(main
   src/block.cpp
   src/chunk_gen.cpp
   src/frustrum.cpp
-  src/init_gl.cpp
   src/game.cpp
   src/entity.cpp
   src/stb_impl.cpp
   src/nuklear_impl.cpp
-  src/gfx/vao.cpp
   src/block_icon_gen.cpp
-  src/gfx/framebuffer.cpp
   src/ortho_camera.cpp
   src/registries.cpp
   src/item.cpp
@@ -80,7 +87,18 @@ add_executable(main
   src/gui/screen.cpp
   src/gui/hotbar.cpp
   src/texture_manager.cpp
+  src/shader_manager.cpp
+  src/init_bgfx.cpp
   src/ecs.cpp
+  shaders/chunk_vs.sc
+  shaders/debug_vs.sc
+  shaders/rect_vs.sc
+  shaders/text_vs.sc
+  shaders/chunk_fs.sc
+  shaders/debug_fs.sc
+  shaders/rect_fs.sc
+  shaders/text_fs.sc
+  src/load_texture.cpp
 )
 
 target_include_directories(main PRIVATE src)
@@ -89,7 +107,7 @@ target_link_libraries(main PRIVATE
   SDL3::SDL3
   glm::glm
   EnTT::EnTT
-  glad
-  PRIVATE Freetype::Freetype
+  Freetype::Freetype
+  bgfx
 )
 

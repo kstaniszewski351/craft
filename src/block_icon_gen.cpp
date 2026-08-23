@@ -1,77 +1,105 @@
 #include "block_icon_gen.h"
 #include "atlas.h"
+#include "bgfx/bgfx.h"
+#include "bgfx/defines.h"
 #include "camera_data.h"
 #include "chunk_mesh.h"
 #include "chunk_vertex.h"
 #include "direction.h"
-#include "gfx/framebuffer.h"
-#include "glad/gl.h"
 #include "ortho_camera.h"
-#include "gfx/shader.h"
+#include "views.h"
 #include "world_renderer.h"
+#include <cstdint>
 #include <glm/gtc/quaternion.hpp>
+#include "game.h"
 
 Atlas GenerateIconAtlas(std::vector<int>& blocks, int icon_size, const Atlas& blocks_atlas) {
   int pow2_size = findSize(blocks.size());
   int tex_size = pow2_size * icon_size;
 
-  GFX::Texture depth_buf(tex_size, tex_size, GL_DEPTH_COMPONENT24);
-  GFX::Texture color_buf(tex_size, tex_size, GL_RGBA8);
-  GFX::Shader shader("res/shaders/chunk.frag", "res/shaders/chunk.vert");
-  GFX::VAO vao(CHUNK_VERTEX_FORMAT.begin(), CHUNK_VERTEX_FORMAT.end(), sizeof(ChunkVertex));
-  GFX::Framebuffer fbo;
-  GFX::Buffer camera_buf;
-  GFX::Buffer vbo;
-  GFX::Buffer ebo;
-  
-  shader.BindUniformBlock(0, 0);
+  bgfx::TextureHandle depth_buf = bgfx::createTexture2D(
+    tex_size,
+    tex_size,
+    false,
+    1,
+    bgfx::TextureFormat::D24,
+    BGFX_TEXTURE_RT
+  );
+  bgfx::TextureHandle color_buf = bgfx::createTexture2D(
+    tex_size,
+    tex_size,
+    false,
+    1,
+    bgfx::TextureFormat::RGBA8,
+    BGFX_TEXTURE_RT
+  );
 
-  fbo.AttachTexture(GL_COLOR_ATTACHMENT0, color_buf);
-  fbo.AttachTexture(GL_DEPTH_ATTACHMENT, depth_buf);
+  bgfx::ProgramHandle shader = Game::Get().GetShaderManager().LoadProgram("chunk_vs.sc", "chunk_fs.sc");
+
+  bgfx::VertexLayout layout;
+  layout.begin()
+    .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+    .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+  .end();
+
+  bgfx::DynamicVertexBufferHandle vertex_buf = bgfx::createDynamicVertexBuffer((unsigned int)0, layout, BGFX_BUFFER_ALLOW_RESIZE);
+  bgfx::DynamicIndexBufferHandle index_buf = bgfx::createDynamicIndexBuffer((unsigned int)0, BGFX_BUFFER_ALLOW_RESIZE);
+  bgfx::UniformHandle s_atlas = bgfx::createUniform("s_atlas", bgfx::UniformType::Sampler);
+  
+
+
   OrthoCamera camera;
   camera.position = {2, 2, 2};
-  camera.rotation = glm::quatLookAt(glm::normalize(- camera.position), direction_vectors[Up]);
+  camera.rotation = glm::quatLookAt(glm::normalize(- camera.position), DIRECTION_VECTORS[Up]);
   camera.aspect_ratio = -1.0f;
   camera.size = 1.8f;
-  CameraData data {
-    camera.GetViewMat(),
-    camera.GetProjectionMat(),
-    camera.position
-  };
+
+  std::array<bgfx::TextureHandle, 2> attachments = {color_buf, depth_buf};
+  bgfx::FrameBufferHandle framebuffer = bgfx::createFrameBuffer(2, attachments.data());
+
+  bgfx::setViewFrameBuffer(Views::IconGen, framebuffer);
+  bgfx::setViewRect(Views::IconGen, 0, 0, tex_size, tex_size);
+  bgfx::setViewClear(
+    Views::IconGen,
+    BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+  );
+  bgfx::setState(BGFX_STATE_DEFAULT);
+
+  bgfx::setVertexBuffer(0, vertex_buf);
+  bgfx::setIndexBuffer(index_buf);
+  
+  bgfx::setTexture(0, s_atlas, blocks_atlas.getTexture());
+
+  glm::mat4 view_mat = camera.GetViewMat();
+  glm::mat4 proj_mat = camera.GetProjectionMat();
+
+  bgfx::setViewTransform(Views::IconGen, &view_mat, &proj_mat);
 
 
-  vao.Bind();
-  vbo.BindVertexBuffer(0, 0, sizeof(ChunkVertex));
-  ebo.Bind(GL_ELEMENT_ARRAY_BUFFER);
-  shader.Use();
-  blocks_atlas.getTexture().Bind(0);
-
-  camera_buf.BindTarget(GL_UNIFORM_BUFFER, 0);
-  camera_buf.Data(sizeof(CameraData), &data);
-
-
-  fbo.Bind(GL_FRAMEBUFFER);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   for(int i = 0; i < blocks.size(); i++) {
     std::vector<ChunkVertex> vertices;
-    std::vector<unsigned int> triangles;
+    std::vector<uint16_t> triangles;
   
     for(int d = 0; d < DirectionCount; d++) {
       addBlockFace((Direction)d, {0, 0, 0}, blocks[i], blocks_atlas, vertices, triangles);
     }
-    vbo.Data(sizeof(ChunkVertex) * vertices.size(), vertices.data());
-    ebo.Data(sizeof(unsigned int) * triangles.size(), triangles.data());
+    bgfx::update(vertex_buf, 0, bgfx::copy(vertices.data(), vertices.size() * sizeof(ChunkVertex)));
+    bgfx::update(index_buf, 0, bgfx::copy(triangles.data(), triangles.size() * sizeof(uint16_t)));
 
     int x = (i % pow2_size) * icon_size;
     int y = (i / pow2_size) * icon_size;
 
-    glViewport(x, y, icon_size, icon_size);
+    bgfx::setViewRect(Views::IconGen, x, y, icon_size, icon_size);
 
-
-    glDrawElements(GL_TRIANGLES, triangles.size(), GL_UNSIGNED_INT, 0);
+    bgfx::submit(Views::IconGen, shader);
   }
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  return Atlas(std::move(color_buf), pow2_size, icon_size);
+  bgfx::destroy(depth_buf);
+  bgfx::destroy(shader);
+  bgfx::destroy(index_buf);
+  bgfx::destroy(vertex_buf);
+  bgfx::destroy(s_atlas);
+
+  return Atlas(color_buf, pow2_size, icon_size);
 }

@@ -1,28 +1,25 @@
 #pragma once
 
 #include "atlas.h"
-#include "gfx/buffer.h"
 #include "chunk.h"
+#include <bgfx/bgfx.h>
 #include <glm/mat4x4.hpp>
 #include <vector>
-#include "glad/gl.h"
 #include "direction.h"
 #include "chunk_vertex.h"
 
-void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<unsigned int>& triangles);
+void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<std::uint16_t>& triangles);
 
 class ChunkMesh {
  public:
-  ChunkMesh(Chunk& chunk, const Atlas& atlas);
+  ChunkMesh(Chunk* chunk, const Atlas* atlas, const bgfx::VertexLayout& layout);
   ~ChunkMesh();
   void Update();
-  void Draw();
-  std::vector<ChunkVertex> vertices;
-  std::vector<GLuint> triangles;
+  void Bind();
  private:
-  Chunk& chunk_;
-  void addFace(Direction dir, glm::ivec3 pos, char block);
-  GFX::Buffer vbo_;
-  GFX::Buffer ebo_;
-  const Atlas& atlas_;
+  Chunk* chunk_;
+  void addFace(Direction dir, glm::ivec3 pos, char block, std::vector<ChunkVertex>& vertices, std::vector<unsigned int>& triangles);
+  bgfx::DynamicVertexBufferHandle vertex_buffer_;
+  bgfx::DynamicIndexBufferHandle index_buffer_;
+  const Atlas* atlas_;
 };

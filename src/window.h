@@ -8,17 +8,26 @@
 
 class Window {
  public:
-  Window(std::string title = "Window", glm::ivec2 size = glm::ivec2(1920, 1080));
+  enum class Platform {
+    X11,
+    Wayland,
+    Cocoa,
+    Windows
+  };
+
+
+  Window(std::string title, glm::ivec2 size);
   ~Window();
-  void Swap();
   void SetSize(glm::ivec2 size);
   void SetLockCursor(bool value);
   bool GetLockCursor() const;
   glm::ivec2 GetSize() const;
   float GetAspectRatio() const;
   glm::vec2 GetRelativeMousePos(glm::vec2 pos) const;
+  void* GetNativeHandle() const;
+  void* GetNativeDisplayType() const;
+  Platform GetPlatform() const;
 
  private:
   SDL_Window* window_;
-  SDL_GLContext gl_context_;
 };

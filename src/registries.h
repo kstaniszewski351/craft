@@ -1,4 +1,3 @@
-#include "gfx/texture.h"
 #include "item.h"
 #include "item_model.h"
 #include "registry.h"

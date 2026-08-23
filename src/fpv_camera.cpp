@@ -34,9 +34,9 @@ Plane::Plane(glm::vec3 normal, glm::vec3 pos) {
 
 Frustrum FPVCamera::GetFrustrum() const {
   Frustrum f;
-  glm::vec3 up = rotation * direction_vectors[Up];
-  glm::vec3 front = rotation * direction_vectors[Front];
-  glm::vec3 right = rotation * direction_vectors[Right];
+  glm::vec3 up = rotation * DIRECTION_VECTORS[Up];
+  glm::vec3 front = rotation * DIRECTION_VECTORS[Front];
+  glm::vec3 right = rotation * DIRECTION_VECTORS[Right];
   glm::vec3 far_vec = far_plane * front;
   float half_h = far_plane * tanf(fov * 0.5f);
   float half_w = half_h * aspect_ratio;

@@ -3,10 +3,11 @@
 #include "chunk_mesh.h"
 #include "fpv_camera.h"
 #include "frustrum.h"
-#include "gfx/shader.h"
-#include "gfx/texture.h"
+#include "game.h"
 #include "world.h"
 #include <algorithm>
+#include <bgfx/bgfx.h>
+#include <bgfx/defines.h>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 #include <glm/vec2.hpp>
@@ -18,14 +19,21 @@
 
 WorldRenderer::WorldRenderer(World& world, const Atlas& atlas) : 
   world_(world),
-  chunk_shader_("res/shaders/chunk.frag", "res/shaders/chunk.vert"),
-  atlas_(atlas),
-  vao_(CHUNK_VERTEX_FORMAT.begin(), CHUNK_VERTEX_FORMAT.end(), sizeof(ChunkVertex))
-  {
-  //glGenBuffers(1, &model_data_buffer_);
+  atlas_(atlas) {
+
+  vertex_layout_.begin()
+    .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+    .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+    .end();
+
+  atlas_handle_ = bgfx::createUniform("s_atlas", bgfx::UniformType::Sampler);
+  chunk_shader_ = Game::Get().GetShaderManager().LoadProgram("chunk_vs.sc", "chunk_fs.sc");
 }
 
-
+WorldRenderer::~WorldRenderer() {
+  bgfx::destroy(chunk_shader_);
+  bgfx::destroy(atlas_handle_);
+}
 
 void WorldRenderer::Update() {
   //remove unloaded chunks
@@ -46,7 +54,7 @@ void WorldRenderer::Update() {
 
   for(auto& chunk : loaded_chunks) {
     if(!meshes_.contains(chunk.first)) {
-      meshes_[chunk.first] = std::make_unique<ChunkMesh>(chunk.second, atlas_);
+      meshes_[chunk.first] = std::make_unique<ChunkMesh>(&chunk.second, &atlas_, vertex_layout_);
     }
   }
 
@@ -79,16 +87,11 @@ void WorldRenderer::Draw(const FPVCamera& camera) {
 
   std::sort(draw_list.begin(), draw_list.end(), [](auto& a, auto& b) {return a.first < b.first;});
 
-  chunk_shader_.Use();
-  atlas_.getTexture().Bind(0);
-  vao_.Bind();
 
   for(const auto [_, mesh] : draw_list) {
-    //mesh.second->Draw();
-    mesh->Draw();
+    bgfx::setState(BGFX_STATE_DEFAULT);
+    bgfx::setTexture(0, atlas_handle_, atlas_.getTexture());
+    mesh->Bind();
+    bgfx::submit(0, chunk_shader_);
   }
-}
-
-const Atlas& WorldRenderer::GetAtlas() {
-  return atlas_;
 }

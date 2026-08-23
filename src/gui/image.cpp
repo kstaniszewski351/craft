@@ -1,27 +1,19 @@
 #include "image.h"
+#include "bgfx/bgfx.h"
+#include <glm/ext/vector_float2.hpp>
 
 namespace GUI {
 
-  Image::Image(const GFX::Texture* texture, glm::ivec2 pos, glm::ivec2 size, Rect uv) :
+  Image::Image(bgfx::TextureHandle texture, glm::ivec2 pos, glm::ivec2 size, glm::vec2 uv_offset, glm::vec2 uv_scale) :
    Widget(pos, size),
-   texture_(texture) {
-    SetUV(uv);
+   texture_(texture),
+   uv_offset_(uv_offset),
+   uv_scale_(uv_scale) {
 
   };
 
-  void Image::SetUV(Rect uv) {
-    auto uv_data = std::array<glm::vec2, 4> {{
-      uv.p1,
-      {uv.p1.x, uv.p2.y},
-      {uv.p2.x, uv.p1.y},
-      uv.p2
-    }};
-
-    uv_.Data(sizeof(uv_data), &uv_data);
-  }
-
   void Image::Draw(GUIRenderer& renderer) {
-    renderer.DrawImage(GetPos(), GetSize(), *texture_, uv_);
+    renderer.DrawImage(GetPos(), GetSize(), texture_, uv_offset_, uv_scale_);
   }
 
 

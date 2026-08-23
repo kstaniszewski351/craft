@@ -1,5 +1,6 @@
 #include "chunk.h"
 #include "chunk_gen.h"
+#include "direction.h"
 #include "world.h"
 #include <array>
 #include <memory>
@@ -52,3 +53,40 @@ void Chunk::SetNeighbor(Chunk* neighbor, int index) {
 Chunk* Chunk::GetNeighbor(int direction) const {
   return neighbors_[direction];
 }
+
+std::array<bool, 6> Chunk::GetVisibleFaces(glm::ivec3 pos) const {
+  std::array<bool, 6> res = {};
+  if(pos.y == 15 || blocks_->data()[pos.x][pos.y+1][pos.z] == 0) {
+    res[Up] = true;
+  }
+  if(pos.y == 0 || blocks_->data()[pos.x][pos.y-1][pos.z] == 0) {
+    res[Down] = true;
+  }
+  if(
+    (pos.x == 0 && neighbors_[West] != nullptr && neighbors_[West]->GetBlocks()[15][pos.y][pos.z] == 0) ||
+    (pos.x > 0 && blocks_->data()[pos.x-1][pos.y][pos.z] == 0)
+  ) {
+    res[Left] = true;
+  }
+  if(
+    (pos.x == 15 && neighbors_[East] != nullptr && neighbors_[East]->GetBlocks()[0][pos.y][pos.z] == 0) ||
+    (pos.x < 15 && blocks_->data()[pos.x+1][pos.y][pos.z] == 0)
+  ) {
+    res[Right] = true;
+  }
+  if(
+    (pos.z == 0 && neighbors_[North] != nullptr && neighbors_[North]->GetBlocks()[pos.x][pos.y][15] == 0) ||
+    (pos.z > 0 && blocks_->data()[pos.x][pos.y][pos.z-1] == 0)
+  ) {
+    res[Front] = true;
+  }
+  if(
+    (pos.z == 15 && neighbors_[South] != nullptr && neighbors_[South]->GetBlocks()[pos.x][pos.y][0] == 0) ||
+    (pos.z < 15 && blocks_->data()[pos.x][pos.y][pos.z+1] == 0)
+  ) {
+    res[Back] = true;
+  }
+
+
+  return res;
+};

@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "bgfx/bgfx.h"
 #include "camera_data.h"
 #include "components/box_collider.h"
 #include "components/inventory.h"
@@ -14,6 +15,7 @@
 #include "systems/hitbox_renderer.h"
 #include "systems/physics.h"
 #include "systems/player_movement.h"
+#include "views.h"
 #include "window.h"
 #include <entt/entity/fwd.hpp>
 #include "registries.h"
@@ -55,7 +57,7 @@ void Scene::Draw(float delta_time, Window& window) {
   world_renderer_.Draw(camera_);
   hitbox_renderer_.Draw(entities_.GetReg());
 
-  //gui_renderer.Draw(*hotbar_, window);
+  //Game::Get().GetGUIRenderer().Draw(*hotbar_, window);
 }
 
 void Scene::updateCameraData() {
@@ -69,13 +71,10 @@ void Scene::updateCameraData() {
 
   camera_.position = pos;
   camera_.rotation = view.rotation;
-  CameraData camera_data {
-    .view = camera_.GetViewMat(),
-    .projection = camera_.GetProjectionMat(),
-    .position = camera_.position
-  };
-  camera_ebo_.BindTarget(GL_UNIFORM_BUFFER, 0);
-  camera_ebo_.Data(sizeof(camera_data), &camera_data);
+  glm::mat4 view_mat = camera_.GetViewMat();
+  glm::mat4 proj_mat = camera_.GetProjectionMat();
+
+  bgfx::setViewTransform(Views::Default, &view_mat, &proj_mat);
 }
 
 World& Scene::GetWorld() {

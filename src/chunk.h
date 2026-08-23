@@ -1,5 +1,6 @@
 #pragma once
 
+#include "direction.h"
 #include <array>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -7,9 +8,9 @@
 
 class World;
 
+constexpr glm::ivec3 CHUNK_SIZE = {16, 256, 16};
 
-
-using Blocks = std::array<std::array<std::array<char, 16>, 256>, 16>;
+using Blocks = std::array<std::array<std::array<char, CHUNK_SIZE.x>, CHUNK_SIZE.y>, CHUNK_SIZE.z>;
 
 enum ChunkDirection {
   North = 0,
@@ -18,11 +19,11 @@ enum ChunkDirection {
   West
 };
 
-constexpr std::array<glm::ivec2, 4> ChunkDirectionVectors = {
-  glm::ivec2(0, -1), // North
-  glm::ivec2(1, 0),  // East
-  glm::ivec2(0, 1),  // South
-  glm::ivec2(-1, 0)  // West
+constexpr std::array<glm::ivec2, 4> CHUNK_DIRECTION_VECTORS = {
+  glm::ivec2(0, -1),
+  glm::ivec2(1, 0),
+  glm::ivec2(0, 1),
+  glm::ivec2(-1, 0)
 };
 
 class Chunk {
@@ -36,6 +37,7 @@ class Chunk {
     void SetNeighbor(Chunk* neighbor, int index);
     Chunk* GetNeighbor(int direction) const;
     void Redrawn();
+    std::array<bool, 6> GetVisibleFaces(glm::ivec3 pos) const;
   private:
     std::array<Chunk*, 4> neighbors_;
     glm::ivec2 chunk_pos_;

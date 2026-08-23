@@ -35,16 +35,16 @@ void CameraController::Update(float delta_time, glm::vec2 mouse_motion) {
   glm::vec3 xz_move_direction {};
 
   if(keyboard_state[SDL_SCANCODE_W]) {
-      xz_move_direction += direction_vectors[Front];
+      xz_move_direction += DIRECTION_VECTORS[Front];
   }
   if(keyboard_state[SDL_SCANCODE_S]) {
-    xz_move_direction += direction_vectors[Back];
+    xz_move_direction += DIRECTION_VECTORS[Back];
   }
   if(keyboard_state[SDL_SCANCODE_A]) {
-    xz_move_direction += direction_vectors[Left];
+    xz_move_direction += DIRECTION_VECTORS[Left];
   }
   if(keyboard_state[SDL_SCANCODE_D]) {
-    xz_move_direction += direction_vectors[Right];
+    xz_move_direction += DIRECTION_VECTORS[Right];
   }
 
   if(xz_move_direction != glm::vec3(0.0f)) {
@@ -56,10 +56,10 @@ void CameraController::Update(float delta_time, glm::vec2 mouse_motion) {
 
   glm::vec3 y_move_direction {};
   if(keyboard_state[SDL_SCANCODE_SPACE]) {
-    y_move_direction += direction_vectors[Up];
+    y_move_direction += DIRECTION_VECTORS[Up];
   }
   if(keyboard_state[SDL_SCANCODE_LSHIFT]) {
-    y_move_direction += direction_vectors[Down];
+    y_move_direction += DIRECTION_VECTORS[Down];
   }
   if(y_move_direction != glm::vec3(0.0f)) {
     y_move_direction = glm::normalize(y_move_direction);

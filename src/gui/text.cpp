@@ -1,17 +1,25 @@
 #include "text.h"
+#include "bgfx/bgfx.h"
+#include "bgfx/defines.h"
+#include "gui/gui_renderer.h"
 
 namespace GUI {
-  Text::Text(std::string text, glm::ivec2 pos, Font* font) :
+  Text::Text(std::string text, glm::ivec2 pos, Font* font, const bgfx::VertexLayout& layout) :
     text_(text),
     font_(font),
     Widget(pos, {0, 0}) {
-
+    vertex_buf_ = bgfx::createDynamicVertexBuffer((unsigned int)0, layout, BGFX_BUFFER_ALLOW_RESIZE);
+    index_buf_ = bgfx::createDynamicIndexBuffer((unsigned int)0, BGFX_BUFFER_ALLOW_RESIZE);
+  }
+  Text::~Text() {
+    bgfx::destroy(vertex_buf_);
+    bgfx::destroy(index_buf_);
   }
 
   glm::ivec2 Text::Recalc() {
     std::vector<QuadVertex> vertices;
     vertices.reserve(text_.size() * QUAD_VERTS.size());
-    std::vector<unsigned int> ebo;
+    std::vector<uint16_t> ebo;
     ebo.reserve(text_.size() * QUAD_TRIANGLES.size());
 
     //int max_w = size_.x;
@@ -44,8 +52,8 @@ namespace GUI {
       offset.x += character.advance;
       i++;
     }
-    ebo_.Data(sizeof(unsigned int) * ebo.size(), ebo.data());
-    vbo_.Data(sizeof(QuadVertex) * vertices.size(), vertices.data());
+    bgfx::update(vertex_buf_, 0, bgfx::copy(vertices.data(), vertices.size() * sizeof(QuadVertex)));
+    bgfx::update(index_buf_, 0, bgfx::copy(ebo.data(), ebo.size() * sizeof(uint16_t)));
     return offset;
   }
 }

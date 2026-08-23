@@ -1,31 +1,26 @@
 #include "window.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_video.h>
+#include <cstdint>
 #include <glm/glm.hpp>
 
 #include <stdexcept>
 
 Window::Window(std::string title, glm::ivec2 size) {
-  window_ = SDL_CreateWindow(title.c_str(), size.x, size.y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+  SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
+
+
+  window_ = SDL_CreateWindow(title.c_str(), size.x, size.y, flags);
   if(window_ == nullptr) {
     throw std::runtime_error(std::string("Failed to create window: ") + SDL_GetError());
-  }
-  
-
-  gl_context_ = SDL_GL_CreateContext(window_);
-  if(gl_context_ == nullptr) {
-    throw std::runtime_error(std::string("Failed to create OpenGL context: ") + SDL_GetError());
   }
 }
 
 void Window::SetSize(glm::ivec2 size) {
   SDL_SetWindowSize(window_, size.x, size.y);
 };
-
-void Window::Swap() {
-  SDL_GL_SwapWindow(window_);
-}
 
 void Window::SetLockCursor(bool value) {
   SDL_SetWindowRelativeMouseMode(window_, value);
@@ -51,7 +46,70 @@ glm::vec2 Window::GetRelativeMousePos(glm::vec2 pos) const {
   return pos / size;
 }
 
+Window::Platform Window::GetPlatform() const {
+  std::string driver = SDL_GetCurrentVideoDriver();
+
+  if(driver == "wayland") {
+    return Platform::Wayland;
+  }
+  else if(driver == "x11") {
+    return Platform::X11;
+  }
+  else if(driver == "cocoa") {
+    return Platform::Cocoa;
+  }
+
+  throw std::runtime_error("Running on unknown platform");
+};
+
+void* Window::GetNativeHandle() const {
+  auto platform = GetPlatform();
+  auto props = SDL_GetWindowProperties(window_);
+  void* handle;
+
+  switch(platform) {
+    case Platform::Wayland:
+      handle = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, nullptr);
+      break;
+    case Platform::X11:
+      handle = (void*)(uintptr_t)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+      break;
+    default:
+      handle = nullptr;
+  }
+
+  return handle;
+}
+
+void* Window::GetNativeDisplayType() const {
+  void* handle = nullptr;
+
+  auto props = SDL_GetWindowProperties(window_);
+
+  auto platform = GetPlatform();
+
+  void* display;
+
+  switch(platform) {
+    case Platform::Wayland:
+      display = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, nullptr);
+      break;
+    case Platform::X11:
+      display = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr);
+      break;
+    case Platform::Cocoa:
+      display = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
+    default:
+      throw std::runtime_error("Unsupported platform");
+      break;
+  };
+
+  return display;
+}
+
+
+
 Window::~Window() {
-  SDL_GL_DestroyContext(gl_context_);
+  //SDL_GL_DestroyContext(gl_context_);
   SDL_DestroyWindow(window_);
 }

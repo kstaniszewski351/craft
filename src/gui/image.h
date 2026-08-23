@@ -1,16 +1,15 @@
-#include "gfx/texture.h"
+#include "bgfx/bgfx.h"
 #include "gui/gui_renderer.h"
 #include "widget.h"
-#include "rect.h"
 
 namespace GUI {
   class Image : public Widget {
    public:
-    Image(const GFX::Texture* texture, glm::ivec2 pos, glm::ivec2 size, Rect uv = {});
+    Image(bgfx::TextureHandle texture, glm::ivec2 pos, glm::ivec2 size, glm::vec2 uv_offset = {0.0f, 0.0f}, glm::vec2 uv_scale = {1.0f, 1.0f});
     void Draw(GUIRenderer& renderer) override;
-    void SetUV(Rect uv);
    private:
-    const GFX::Texture* texture_;
-    GFX::Buffer uv_;
+    bgfx::TextureHandle texture_;
+    glm::vec2 uv_offset_;
+    glm::vec2 uv_scale_;
   };
 }

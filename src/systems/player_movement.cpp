@@ -71,16 +71,16 @@ void MovePlayer(ECS& ecs, Window& window, Scene& scene, float delta_time) {
     glm::vec3 xz_vector {};
 
     if(keyboard_state[SDL_SCANCODE_W]) {
-      xz_vector += direction_vectors[Front];
+      xz_vector += DIRECTION_VECTORS[Front];
     }
     if(keyboard_state[SDL_SCANCODE_S]) {
-      xz_vector += direction_vectors[Back];
+      xz_vector += DIRECTION_VECTORS[Back];
     }
     if(keyboard_state[SDL_SCANCODE_A]) {
-      xz_vector += direction_vectors[Left];
+      xz_vector += DIRECTION_VECTORS[Left];
     }
     if(keyboard_state[SDL_SCANCODE_D]) {
-      xz_vector += direction_vectors[Right];
+      xz_vector += DIRECTION_VECTORS[Right];
     }
 
     if(xz_vector != glm::vec3(0.0f)) {

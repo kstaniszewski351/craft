@@ -1,19 +1,16 @@
 #pragma once
 
+#include "bgfx/bgfx.h"
 #include <entt/entity/fwd.hpp>
 #include <entt/entt.hpp>
-#include "gfx/shader.h"
-#include "gfx/buffer.h"
-#include "gfx/vao.h"
 
 class HitboxRenderer {
  public:
   HitboxRenderer();
+  ~HitboxRenderer();
   void Draw(entt::registry& reg);
  private:
-  GFX::Shader shader_; 
-  GFX::Buffer vbo_;
-  GFX::Buffer ebo_;
-  GFX::Buffer ubo_;
-  GFX::VAO vao_;
+  bgfx::ProgramHandle shader_;
+  bgfx::VertexBufferHandle vertex_buf_;
+  bgfx::IndexBufferHandle index_buf_;
 };

@@ -22,12 +22,10 @@ class Scene {
     World world_;
     ECS entities_;
     WorldRenderer world_renderer_;
-    GUI::GUIRenderer gui_renderer_;
     HitboxRenderer hitbox_renderer_;
     GUI::GUIRenderer gui_renderer;
     GUI::Hotbar* hotbar_;
     Entity player_;
     FPVCamera camera_;
-    GFX::Buffer camera_ebo_;
   friend class Entity;
 };

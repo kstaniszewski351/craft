@@ -122,16 +122,16 @@ void World::LoadChunk(glm::ivec2 chunk_pos) {
   loaded_chunks_.emplace(chunk_pos, Chunk(chunk_pos, *this));
   
   for(int i = 0; i < 4; i++) {
-    if(loaded_chunks_.find(chunk_pos + ChunkDirectionVectors[i]) != loaded_chunks_.end()) {
-      loaded_chunks_.at(chunk_pos).SetNeighbor(&loaded_chunks_.at(chunk_pos + ChunkDirectionVectors[i]), i);
-      loaded_chunks_.at(chunk_pos + ChunkDirectionVectors[i]).SetNeighbor(&loaded_chunks_.at(chunk_pos), (i + 2) % 4);
+    if(loaded_chunks_.find(chunk_pos + CHUNK_DIRECTION_VECTORS[i]) != loaded_chunks_.end()) {
+      loaded_chunks_.at(chunk_pos).SetNeighbor(&loaded_chunks_.at(chunk_pos + CHUNK_DIRECTION_VECTORS[i]), i);
+      loaded_chunks_.at(chunk_pos + CHUNK_DIRECTION_VECTORS[i]).SetNeighbor(&loaded_chunks_.at(chunk_pos), (i + 2) % 4);
     }
   }
 }
 
 void World::UnloadChunk(glm::ivec2 chunk_pos) {
   for(int i = 0; i < 4; i++) {
-    auto chunk = loaded_chunks_.find(chunk_pos + ChunkDirectionVectors[i]);
+    auto chunk = loaded_chunks_.find(chunk_pos + CHUNK_DIRECTION_VECTORS[i]);
     if(chunk != loaded_chunks_.end()) {
       chunk->second.SetNeighbor(nullptr, (i + 2) % 4);
     }
