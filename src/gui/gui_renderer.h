@@ -40,7 +40,7 @@ namespace GUI {
     void DrawText(bgfx::TextureHandle texture, bgfx::VertexBufferHandle vertex_buf, bgfx::IndexBufferHandle index_buf, int count);
     Text* CreateText(std::string text, glm::ivec2 pos, Font* font);
     void DrawQuad();
-    void Draw(Widget& root, const Window& window);
+    void Update(glm::ivec2 window_size);
     ~GUIRenderer();
    private:
     bgfx::VertexLayout text_layout_;
@@ -52,5 +52,6 @@ namespace GUI {
     bgfx::UniformHandle s_image_;
     bgfx::UniformHandle u_transform;
     bgfx::UniformHandle u_uv_;
+    bgfx::UniformHandle u_gui_proj_;
   };
 }

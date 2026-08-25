@@ -13,11 +13,14 @@ namespace GUI {
     glm::ivec2 GetPos() const;
     Rect GetBounds() const;
     void SetPos(glm::ivec2 pos);
-    virtual void Draw(GUIRenderer& renderer) {};
+    virtual void DrawImpl(GUIRenderer& renderer) {};
+    virtual void Recalc() {};
+    void Draw(GUIRenderer& renderer);
     virtual void OnClick() {};
     virtual ~Widget() {};
    private:
     glm::ivec2 pos_;
     glm::ivec2 size_;
+    bool has_changed_;
   };
 }

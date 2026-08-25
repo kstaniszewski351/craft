@@ -1,21 +1,25 @@
 #pragma once
 
-#include "game.h"
+#include "gui/gui_manager.h"
 #include "gui/widget.h"
 #include <memory>
 #include <vector>
+
+class Game;
+
 namespace GUI {
   class Screen {
    public:
-    Screen(glm::ivec2 size);
-    void Draw();
+    Screen();
+    ~Screen();
+    void Draw(GUIRenderer& renderer);
     void Click(glm::ivec2 pos);
-    glm::ivec2 GetSize() const;
+    virtual void Update() {};
+    virtual void Recalc(glm::ivec2 size) {};
    protected:
     Widget* AddWidget(Widget* widget);
-    Game& game_;
+    GuiManager* gui_manager_;
    private:
     std::vector<std::unique_ptr<Widget>> widgets_;
-    glm::ivec2 size_;
   };
 }

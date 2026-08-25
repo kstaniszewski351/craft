@@ -1,6 +1,7 @@
 #pragma once
 
+#include "bgfx/bgfx.h"
 namespace Views {
-  constexpr int Default = 0;
-  constexpr int IconGen = 1;
+  constexpr bgfx::ViewId Default = 0;
+  constexpr bgfx::ViewId IconGen = 1;
 }

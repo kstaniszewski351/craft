@@ -11,6 +11,7 @@
 #include "direction.h"
 #include "world.h"
 #include <SDL3/SDL_mouse.h>
+#include "game.h"
 
 
 
@@ -88,14 +89,6 @@ void MovePlayer(ECS& ecs, Window& window, Scene& scene, float delta_time) {
       xz_vector = yaw_rotation * xz_vector;
       xz_vector = glm::normalize(xz_vector);
       physics.velocity += xz_vector * 30.0f * delta_time;
-    }
-
-    //update invetory
-
-    for(int i = SDL_SCANCODE_1; i <= SDL_SCANCODE_9; i++) {
-      if(keyboard_state[i]) {
-        inventory.active_slot = i - SDL_SCANCODE_1;
-      }
     }
 
     //place blocks

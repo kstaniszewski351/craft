@@ -16,7 +16,7 @@ namespace GUI {
     bgfx::destroy(index_buf_);
   }
 
-  glm::ivec2 Text::Recalc() {
+  void Text::Recalc() {
     std::vector<QuadVertex> vertices;
     vertices.reserve(text_.size() * QUAD_VERTS.size());
     std::vector<uint16_t> ebo;
@@ -54,6 +54,6 @@ namespace GUI {
     }
     bgfx::update(vertex_buf_, 0, bgfx::copy(vertices.data(), vertices.size() * sizeof(QuadVertex)));
     bgfx::update(index_buf_, 0, bgfx::copy(ebo.data(), ebo.size() * sizeof(uint16_t)));
-    return offset;
+    //return offset;
   }
 }

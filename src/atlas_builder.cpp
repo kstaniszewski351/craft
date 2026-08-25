@@ -9,8 +9,8 @@ int AtlasBuilder::AddTexture(std::string path) {
   return bitmaps_.size()-1;
 }
 
-Atlas AtlasBuilder::Build() {
-  Atlas atlas = Atlas(bitmaps_, 16);
+Atlas* AtlasBuilder::Build() {
+  Atlas* atlas = new Atlas(bitmaps_, 16);
 
   return atlas;
 }

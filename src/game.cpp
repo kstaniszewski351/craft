@@ -1,14 +1,18 @@
 #include "game.h"
 #include "atlas_builder.h"
+#include "block.h"
 #include "blocks.h"
 #include "font_manager.h"
-#include "gui/gui_renderer.h"
+#include "gui/gui_manager.h"
+#include "block_icon_gen.h"
 #include "init_bgfx.h"
 #include "input_manager.h"
+#include "item.h"
 #include "registries.h"
 #include "scene.h"
 #include "shader_manager.h"
 #include "texture_manager.h"
+#include "views.h"
 #include "window.h"
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_mouse.h>
@@ -16,12 +20,21 @@
 #include <chrono>
 #include <bgfx/bgfx.h>
 
-Atlas GenBlockAtlas() {
+Atlas* GenBlockAtlas() {
   AtlasBuilder builder;
   for(auto& [_, block] : gBlockRegistry.GetObjects()) {
     block->RegisterTextures(builder);
   }
   return builder.Build();
+}
+
+Atlas* GenBlockIconAtlas(Atlas& block_atlas) {
+  std::vector<const Block*> blocks;
+  for(BlockItem* item : gBlockItems) {
+    item->RegisterTex(blocks);
+  }
+
+  return GenerateIconAtlas(blocks, 100, block_atlas);
 }
 
 Game& Game::Get() {
@@ -33,38 +46,36 @@ Game& Game::Get() {
 void Game::Run() {
   window_ = new Window("Craft", glm::vec2(1920, 1080));
   window_->SetLockCursor(true);
-  //InitGL();
   InitBgfx(*window_);
-  //SDL_GLContext gl_context = window_.CreateGLContext();
 
+  std::array<bgfx::ViewId, 2> view_order = {Views::IconGen, Views::Default};
+  bgfx::setViewOrder(0, 2, view_order.data());
+  bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH);
+  bgfx::setViewMode(0, bgfx::ViewMode::Sequential);
 
-  //font_manager_ = new FontManager();
   shader_manager_ = new ShaderManager("shaders/");
   font_manager_ = new FontManager();
   texture_manager_ = new TextureManager();
-  gui_renderer_ = new GUI::GUIRenderer();
   input_manager_ = new InputManager();
+  gui_manager_ = new GUI::GuiManager();
 
   //GUI gui;
   bool exit = false;
   RegisterBlocks();
-  Atlas atlas = GenBlockAtlas();
-  Scene* scene = new Scene(atlas);
+  block_atlas_ = GenBlockAtlas();
+  block_icon_atlas = GenBlockIconAtlas(*block_atlas_);
+  Scene* scene = new Scene(*block_atlas_);
 
   auto font = std::unique_ptr<Font>(font_manager_->LoadFont("res/FreeSans.ttf", 40));
 
   float delta_time = 0.0f;
-
+  gui_manager_->Recalc(window_->GetSize());
   while(! exit) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
 
     
     SDL_Event event;
-
-    glm::vec2 mouse_motion = {0.0f, 0.0f};
-
-    //gui.BeginInput();
     //handle SDL events
     while(SDL_PollEvent(&event)) {
       input_manager_->HandleEvent(event);
@@ -72,20 +83,22 @@ void Game::Run() {
         case SDL_EVENT_QUIT:
           exit = true;
           break;
+        case SDL_EVENT_WINDOW_RESIZED:
+          gui_manager_->Recalc(window_->GetSize());
       }
     }
     input_manager_->Update();
-    //gui.EndInput();
+    gui_manager_->Update();
+
     glm::ivec2 window_size = window_->GetSize();
     bgfx::setViewRect(0, 0 , 0, window_size.x, window_size.y);
-    bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH);
 
-    //DrawGUI(ctx, block_images, window);
+
     scene->Draw(delta_time, GetWindow());
-    //gui_renderer.Draw(atlas_image, window);
-    
-    //gui.Draw(delta_time, window);
+    gui_manager_->Draw();
+
     //present on screen
+    bgfx::touch(0);
     bgfx::frame();
     //calculate delta time
     input_manager_->EndFrame();
@@ -94,9 +107,11 @@ void Game::Run() {
     delta_time = duration.count();
   }
 
+  delete gui_manager_;
   delete scene;
+  delete block_atlas_;
+  delete block_icon_atlas;
   delete input_manager_;
-  delete gui_renderer_;
   delete texture_manager_;
   delete font_manager_;
   delete shader_manager_;
@@ -118,9 +133,6 @@ FontManager& Game::GetFontManager() {
 TextureManager& Game::GetTextureManager() {
   return *texture_manager_;
 }
-GUI::GUIRenderer& Game::GetGUIRenderer() {
-  return *gui_renderer_;
-}
 
 InputManager& Game::GetInputManager() {
   return *input_manager_;
@@ -128,4 +140,16 @@ InputManager& Game::GetInputManager() {
 
 ShaderManager& Game::GetShaderManager() {
   return *shader_manager_;
+}
+
+GUI::GuiManager& Game::GetGuiManager() {
+  return *gui_manager_;
+}
+
+Atlas& Game::GetBlockAtlas() {
+  return *block_atlas_;
+}
+
+Atlas& Game::GetBlockIconAtlas() {
+  return *block_icon_atlas;
 }

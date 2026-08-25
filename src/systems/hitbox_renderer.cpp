@@ -55,9 +55,7 @@ HitboxRenderer::HitboxRenderer() {
 
 void HitboxRenderer::Draw(entt::registry& reg) {
   auto view = reg.view<Transform, BoxCollider>();
-  bgfx::setVertexBuffer(0, vertex_buf_);
-  bgfx::setIndexBuffer(index_buf_);
-  bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+
 
   for(auto [entity, transform, box] : view.each()) {
     glm::vec3 pos = transform.pos;
@@ -66,6 +64,9 @@ void HitboxRenderer::Draw(entt::registry& reg) {
     glm::mat4 model_mat = glm::translate(glm::identity<glm::mat4>(), pos);
     model_mat = glm::scale(model_mat, box.size);
     
+    bgfx::setState(BGFX_STATE_DEFAULT | BGFX_STATE_PT_LINES);
+    bgfx::setVertexBuffer(0, vertex_buf_);
+    bgfx::setIndexBuffer(index_buf_);
     bgfx::setTransform(&model_mat);
     bgfx::submit(0, shader_);
   }

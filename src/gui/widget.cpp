@@ -1,7 +1,7 @@
 #include "widget.h"
 
 namespace GUI {
-  Widget::Widget(glm::ivec2 pos, glm::ivec2 size) : pos_(pos), size_(size) {
+  Widget::Widget(glm::ivec2 pos, glm::ivec2 size) : pos_(pos), size_(size), has_changed_(true) {
 
   }
 
@@ -14,6 +14,7 @@ namespace GUI {
   }
 
   void Widget::SetPos(glm::ivec2 pos) {
+    has_changed_ = true;
     pos_ = pos;
   }
 
@@ -22,5 +23,13 @@ namespace GUI {
       pos_,
       pos_ + size_
     };
+  }
+
+  void Widget::Draw(GUIRenderer& renderer) {
+    if(has_changed_) {
+      Recalc();
+      has_changed_ = false;
+    }
+    DrawImpl(renderer);
   }
 }

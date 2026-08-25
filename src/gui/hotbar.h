@@ -2,20 +2,23 @@
 
 #include "components/inventory.h"
 #include "gui/image.h"
+#include "gui/item_slot.h"
 #include "gui/screen.h"
 #include "gui_renderer.h"
 
-#include "widget.h"
 
 namespace GUI {
   class Hotbar : public Screen {
    public:
-    Hotbar(glm::ivec2 pos, const Inventory& inv, glm::ivec2 size);
-    void Update(const Inventory& inv);
+    Hotbar(Inventory* inv);
+    void Recalc(glm::ivec2 size) override;
+    void Update() override;
    private:
-    
+    void updateSelector();
+    void updateSlots();
+    std::array<ItemSlot*, 9> slots_;
     Image* hotbar_img_;
     Image* selector_img_;
-    
+    Inventory* inv_;
   };
 }

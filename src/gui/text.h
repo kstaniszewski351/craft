@@ -10,9 +10,9 @@ namespace GUI {
   public:
    ~Text();
    void Draw(GUIRenderer& renderer) const;
+   void Recalc() override;
   private:
     Text(std::string text, glm::ivec2 pos, Font* font, const bgfx::VertexLayout& layout);
-    glm::ivec2 Recalc();
     Font* font_;
     bgfx::DynamicVertexBufferHandle vertex_buf_;
     bgfx::DynamicIndexBufferHandle index_buf_;

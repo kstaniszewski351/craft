@@ -4,7 +4,7 @@
 #include "registries.h"
 #include <memory>
 #include <utility>
-std::vector<const BlockItem*> block_items;
+std::vector<BlockItem*> gBlockItems;
 
 const Block& Register(std::string name, Block* block) {
 
@@ -13,10 +13,9 @@ const Block& Register(std::string name, Block* block) {
 
 const Block& RegisterWithItem(std::string name, Block* block, std::string display_name) {
   const Block& block_ref = Register(name, block);
-  auto item_ptr = std::make_unique<BlockItem>(name, block_ref);
-  const BlockItem& item_ref = *item_ptr.get();
+  auto item_ptr = std::make_unique<BlockItem>(name, &block_ref);
+  gBlockItems.push_back(item_ptr.get());
   gItemRegistry.Register(name, std::move(item_ptr));
-  //block_items.push_back(item_ref);
   return block_ref;
 }
 

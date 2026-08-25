@@ -9,6 +9,7 @@
 #include "components/view.h"
 #include "ecs.h"
 #include "entity.h"
+#include "game.h"
 #include "gui/hotbar.h"
 #include "item_stack.h"
 #include "registry.h"
@@ -31,10 +32,12 @@ Scene::Scene(const Atlas& atlas)
   player_.AddComponent<PlayerController>();
   auto& inv = player_.AddComponent<Inventory>();
   auto& dirt = gItemRegistry.Get("dirt");
+  auto& grass = gItemRegistry.Get("grass");
   inv.slots[0] = ItemStack{.item = &dirt, .size = 1};
+  inv.slots[1] = ItemStack{.item = &grass, .size = 1};
   inv.active_slot = 5;
 
-  //hotbar_ = new GUI::Hotbar({0, 0}, inv);
+  hotbar_ = new GUI::Hotbar(&inv);
   camera_.fov = 90;
 }
 
@@ -56,8 +59,6 @@ void Scene::Draw(float delta_time, Window& window) {
   //draw
   world_renderer_.Draw(camera_);
   hitbox_renderer_.Draw(entities_.GetReg());
-
-  //Game::Get().GetGUIRenderer().Draw(*hotbar_, window);
 }
 
 void Scene::updateCameraData() {

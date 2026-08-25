@@ -3,4 +3,4 @@
 #include "item.h"
 
 void RegisterBlocks();
-extern std::vector<const BlockItem*> block_items;
+extern std::vector<BlockItem*> gBlockItems;

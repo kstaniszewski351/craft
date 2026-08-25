@@ -4,13 +4,17 @@
 #include <memory>
 
 namespace GUI {
-  Screen::Screen(glm::ivec2 size) : game_(Game::Get()), size_(size) {
-
+  Screen::Screen() : gui_manager_(&Game::Get().GetGuiManager()) {
+    gui_manager_->AddScreen(this);
   }
 
-  void Screen::Draw() {
+  Screen::~Screen() {
+    gui_manager_->RemoveScreen(this);
+  }
+
+  void Screen::Draw(GUIRenderer& renderer) {
     for(auto& widget : widgets_) {
-      widget->Draw(game_.GetGUIRenderer());
+      widget->Draw(renderer);
     }
   }
 
@@ -30,9 +34,5 @@ namespace GUI {
         widget->OnClick();
       }
     }
-  }
-
-  glm::ivec2 Screen::GetSize() const {
-    return size_;
   }
 }

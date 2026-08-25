@@ -4,13 +4,14 @@
 #include "components/view.h"
 #include "entity.h"
 #include "systems/physics.h"
+#include "game.h"
 
 Item::Item(std::string name) :
   name_(name) {
 
 }
 
-BlockItem::BlockItem(std::string name, const Block& block) : Item(name), block_(block) {
+BlockItem::BlockItem(std::string name, const Block* block) : Item(name), block_(block) {
 
 }
 
@@ -29,5 +30,19 @@ void BlockItem::OnUse(World& world, Entity player) const {
     return;
   }
 
-  world.SetBlock(place_pos, block_.GetRegistryID());
+  world.SetBlock(place_pos, block_->GetRegistryID());
+}
+
+ItemTexInfo BlockItem::GetTexInfo() const {
+  auto& atlas = Game::Get().GetBlockIconAtlas();
+  return {
+    atlas.getTexture(),
+    atlas.GetUV(atlas_id_),
+    {atlas.GetTileSize(), atlas.GetTileSize()}
+  };
+}
+
+void BlockItem::RegisterTex(std::vector<const Block*>& blocks) {
+  atlas_id_ = blocks.size();
+  blocks.push_back(block_);
 }

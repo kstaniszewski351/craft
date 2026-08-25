@@ -12,7 +12,7 @@ namespace GUI {
 
   };
 
-  void Image::Draw(GUIRenderer& renderer) {
+  void Image::DrawImpl(GUIRenderer& renderer) {
     renderer.DrawImage(GetPos(), GetSize(), texture_, uv_offset_, uv_scale_);
   }
 

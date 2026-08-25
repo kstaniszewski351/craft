@@ -33,7 +33,7 @@ file(CREATE_LINK ${CMAKE_SOURCE_DIR}/res ${CMAKE_BINARY_DIR}/res SYMBOLIC)
 bgfx_compile_shaders(
   TYPE VERTEX
   INCLUDE_DIRS ${BGFX_DIR}/src
-  SHADERS shaders/chunk_vs.sc shaders/debug_vs.sc shaders/rect_vs.sc shaders/text_vs.sc
+  SHADERS shaders/chunk_vs.sc shaders/debug_vs.sc shaders/rect_vs.sc shaders/text_vs.sc shaders/atlas_vs.sc
   VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
   OUTPUT_DIR ${CMAKE_BINARY_DIR}/shaders
 )
@@ -82,10 +82,10 @@ add_executable(main
   src/gui/widget.cpp
   src/font_manager.cpp
   src/font.cpp
-  src/gui/text.cpp
   src/gui/image.cpp
   src/gui/screen.cpp
   src/gui/hotbar.cpp
+  src/gui/text.cpp
   src/texture_manager.cpp
   src/shader_manager.cpp
   src/init_bgfx.cpp
@@ -98,7 +98,10 @@ add_executable(main
   shaders/debug_fs.sc
   shaders/rect_fs.sc
   shaders/text_fs.sc
+  shaders/atlas_vs.sc
   src/load_texture.cpp
+  src/gui/gui_manager.cpp
+  src/gui/item_slot.cpp
 )
 
 target_include_directories(main PRIVATE src)
