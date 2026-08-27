@@ -22,7 +22,7 @@ Atlas* GenerateIconAtlas(std::vector<const Block*>& blocks, int icon_size, const
     tex_size,
     false,
     1,
-    bgfx::TextureFormat::D24,
+    bgfx::TextureFormat::D32F,
     BGFX_TEXTURE_RT
   );
   bgfx::TextureHandle color_buf = bgfx::createTexture2D(

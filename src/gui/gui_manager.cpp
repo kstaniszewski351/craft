@@ -9,6 +9,16 @@ namespace GUI {
     screens_.erase(screen);
   }
   void GuiManager::Draw() {
+    if(recalc_) {
+      constexpr int height = 300;
+      int width = (window_size_.x * height) / window_size_.y;
+
+      for(auto screen : screens_) {
+        screen->Recalc({width, height});
+      }
+      renderer_.Update({width, height});
+      recalc_ = false;
+    }
     for(auto screen : screens_) {
       screen->Draw(renderer_);
     }
@@ -19,12 +29,8 @@ namespace GUI {
     }
   }
   void GuiManager::Recalc(glm::ivec2 window_size) {
-    constexpr int height = 300;
-    int width = (window_size.x * height) / window_size.y;
 
-    for(auto screen : screens_) {
-      screen->Recalc({width, height});
-    }
-    renderer_.Update({width, height});
+    window_size_ = window_size;
+    recalc_ = true;
   }
 }

@@ -16,6 +16,8 @@ namespace GUI {
     void Draw();
    private:
     std::set<Screen*> screens_;
+    glm::ivec2 window_size_;
+    bool recalc_;
     GUIRenderer renderer_;
   };
 }

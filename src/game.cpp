@@ -69,7 +69,7 @@ void Game::Run() {
   auto font = std::unique_ptr<Font>(font_manager_->LoadFont("res/FreeSans.ttf", 40));
 
   float delta_time = 0.0f;
-  //gui_manager_->Recalc(window_->GetSize());
+  gui_manager_->Recalc(window_->GetSize());
   while(! exit) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
