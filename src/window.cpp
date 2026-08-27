@@ -74,8 +74,11 @@ void* Window::GetNativeHandle() const {
     case Platform::X11:
       handle = (void*)(uintptr_t)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
       break;
+    case Platform::Cocoa:
+      handle = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
+      break;
     default:
-      handle = nullptr;
+      throw std::runtime_error("Unsupported platform");
   }
 
   return handle;
@@ -97,10 +100,8 @@ void* Window::GetNativeDisplayType() const {
     case Platform::X11:
       display = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_X11_DISPLAY_POINTER, nullptr);
       break;
-    case Platform::Cocoa:
-      display = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
     default:
-      throw std::runtime_error("Unsupported platform");
+      display = nullptr;
       break;
   };
 

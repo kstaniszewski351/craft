@@ -1,12 +1,7 @@
 
 cmake_minimum_required(VERSION 3.12)
 set(CMAKE_CXX_STANDARD 20)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=memory -fsanitize-recover=memory -fno-omit-frame-pointer")
-# set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=memory")
 
-set(VCPKG_TARGET_TRIPLET "x64-linux")
-include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 include(FetchContent)
 
 project(opengl)
@@ -21,7 +16,7 @@ find_package(Freetype REQUIRED)
 FetchContent_Declare(
   bgfx
   GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git
-  GIT_TAG v1.146.9317-553
+  GIT_TAG v1.156.9437-568
 )
 FetchContent_MakeAvailable(
   bgfx
