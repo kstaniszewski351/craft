@@ -12,9 +12,9 @@ bool Collides(const Transform& transform, const BoxCollider& aabb, glm::ivec3 bl
   glm::ivec3 ip2 = glm::floor(p2);
 
 
-  for(int x = p1.x; x <= p2.x; x++) {
-    for(int y = p1.y; y <= p2.y; y++) {
-      for(int z = p1.z; z <= p2.z; z++) {
+  for(int x = ip1.x; x <= ip2.x; x++) {
+    for(int y = ip1.y; y <= ip2.y; y++) {
+      for(int z = ip1.z; z <= ip2.z; z++) {
         if(glm::ivec3(x, y, z) == block_pos) {
           return true;
         }
