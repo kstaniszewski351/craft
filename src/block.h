@@ -10,7 +10,7 @@ class Block : public Registrable {
  public:
 
   struct Properties {
-    
+    int lightLevel = 0;
   };
   Block(Properties props);
   virtual void RegisterTextures(AtlasBuilder& builder) {};
@@ -18,6 +18,7 @@ class Block : public Registrable {
   virtual bool RandomRotate(Direction dir) const {
     return false;
   };
+  const Properties& GetProps() const;
   //virtual ~Block() {};
  private:
   Properties props_;
@@ -25,12 +26,12 @@ class Block : public Registrable {
 
 class UniformBlock : public Block {
  public:
-  UniformBlock(std::string texture, Properties props = {});
+  UniformBlock(std::string texture, bool random_rotate, Properties props = {});
   void RegisterTextures(AtlasBuilder& builder) override;
   int GetTexture(Direction dir) const override;
   bool RandomRotate(Direction dir) const override;
  private:
-
+  bool random_rotate_;
   int texture_id_;
   std::string texture_path_;
 };

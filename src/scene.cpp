@@ -33,8 +33,10 @@ Scene::Scene(const Atlas& atlas)
   auto& inv = player_.AddComponent<Inventory>();
   auto& dirt = gItemRegistry.Get("dirt");
   auto& grass = gItemRegistry.Get("grass");
+  auto& lamp = gItemRegistry.Get("lamp");
   inv.slots[0] = ItemStack{.item = &dirt, .size = 1};
   inv.slots[1] = ItemStack{.item = &grass, .size = 1};
+  inv.slots[2] = ItemStack{.item = &lamp, .size = 1};
   inv.active_slot = 5;
 
   hotbar_ = new GUI::Hotbar(&inv);
@@ -45,7 +47,7 @@ void Scene::Draw(float delta_time, Window& window) {
   //update
   auto player_transform = player_.GetComponent<Transform>();
 
-  world_.UpdateLoaded(player_transform.pos);
+  world_.Update(player_transform.pos);
   world_renderer_.Update();
 
   MovePlayer(entities_, window, *this, delta_time);

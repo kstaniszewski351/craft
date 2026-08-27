@@ -7,9 +7,14 @@ Block::Block(Properties props) :
 
 }
 
-UniformBlock::UniformBlock(std::string texture, Properties props) :
+const Block::Properties& Block::GetProps() const {
+  return props_;
+}
+
+UniformBlock::UniformBlock(std::string texture, bool random_rotate, Properties props) :
   Block(props),
-  texture_path_(texture) {
+  texture_path_(texture),
+  random_rotate_(random_rotate) {
 
 }
 
@@ -22,7 +27,7 @@ int UniformBlock::GetTexture(Direction dir) const {
 }
 
 bool UniformBlock::RandomRotate(Direction dir) const {
-  return true;
+  return random_rotate_;
 }
 
 LogBlock::LogBlock(std::string top, std::string sides, Properties props) :

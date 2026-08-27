@@ -31,6 +31,10 @@ class Chunk {
     Chunk(glm::ivec2 pos, World& world);
     void SetBlock(char block, glm::ivec3 pos);
     char GetBlock(glm::ivec3 pos) const;
+    char GetBlockLightLevel(glm::ivec3 pos) const;
+    char GetSkyLightLevel(glm::ivec3 pos) const;
+    void SetBlockLightLevel(glm::ivec3 pos, char level);
+    void SetSkyLightLevel(glm::ivec3 pos, char level);
     const Blocks& GetBlocks() const;
     bool HasChanged() const;
     glm::ivec2 GetPos() const;
@@ -43,6 +47,7 @@ class Chunk {
     glm::ivec2 chunk_pos_;
     bool has_changed_;
     std::unique_ptr<Blocks> blocks_;
+    std::unique_ptr<Blocks> lighting_;
     World& world_;
     
 };

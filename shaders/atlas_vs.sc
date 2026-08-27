@@ -1,5 +1,5 @@
-$input a_position, a_texcoord0
-$output v_texcoord0
+$input a_position, a_texcoord0, a_color0
+$output v_texcoord0, v_brightness
 
 #include "bgfx_shader.sh"
 
@@ -14,4 +14,5 @@ void main() {
   gl_Position += vec4(u_scalePos.zw, 0.0, 0.0) * 2.0;
 
   v_texcoord0 = a_texcoord0;
+  v_brightness = a_color0;
 }

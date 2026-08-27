@@ -19,9 +19,12 @@ class World {
     World();
     bool SetBlock(glm::ivec3 pos, char block);
     char GetBlock(glm::ivec3 pos) const;
+    char GetBlockLightLevel(glm::ivec3 pos) const;
+    char GetSkyLightLevel(glm::ivec3 pos) const;
+    bool SetBlockLightLevel(glm::ivec3 pos, char level);
+    bool SetSkyLightLevel(glm::ivec3 pos, char level);
     static bool InWorld(glm::ivec3 pos);
-    void UpdateLoaded(glm::ivec3 player_pos);
-    // char GetBlock(glm::ivec2 chunk_pos, glm::ivec3 block_pos) const;
+    void Update(glm::ivec3 player_pos);
     void LoadChunk(glm::ivec2 chunk_pos);
     void UnloadChunk(glm::ivec2 chunk_pos);
     static glm::ivec2 GetChunkPos(glm::ivec3 pos);
@@ -29,7 +32,14 @@ class World {
     std::optional<RaycastResult> Raycast(Ray ray);
     std::unordered_map<glm::ivec2, Chunk>& GetChunks();
   private:
-    //char* getBlockPtr(glm::ivec3 pos);
-    //char* getBlockPtr(glm::ivec2 chunk_pos, glm::ivec3 block_pos);
+    struct LightUpdate {
+      glm::ivec3 pos;
+      char level;
+    };
+
+    void fillLightAdd(glm::ivec3 pos, char level);
+    void fillLightRemove(glm::ivec3 pos, char level);
     std::unordered_map<glm::ivec2, Chunk> loaded_chunks_;
+    std::vector<LightUpdate> light_add_updates_;
+    std::vector<LightUpdate> light_remove_updates_;
 };

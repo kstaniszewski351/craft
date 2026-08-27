@@ -4,12 +4,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <glm/ext/matrix_transform.hpp>
+#include <sys/types.h>
+#include <vector>
 #include "chunk_mesh.h"
 #include "atlas.h"
 #include "direction.h"
 #include "registries.h"
 #include "chunk.h"
 #include "chunk_vertex.h"
+#include "world.h"
 
 constexpr std::array<float, 12> BLOCK_FACE_UP = {
   0.0f, 1.0f, 0.0f,
@@ -82,14 +85,46 @@ constexpr std::array<unsigned int, 6> BLOCK_FACE_TRIANGLES = {
   0, 3, 2
 };
 
-ChunkMesh::ChunkMesh(Chunk* chunk, const Atlas* atlas, const bgfx::VertexLayout& layout)
-  : chunk_(chunk),
-    atlas_(atlas) {
+ChunkMesh::ChunkMesh(const Chunk& chunk, const World& world, const Atlas& atlas, const bgfx::VertexLayout& layout) {
 
+  std::vector<ChunkVertex> vertices;
+  std::vector<uint16_t> triangles;
 
-  vertex_buffer_ = bgfx::createDynamicVertexBuffer((std::uint32_t)0, layout, BGFX_BUFFER_ALLOW_RESIZE);
-  index_buffer_ = bgfx::createDynamicIndexBuffer((std::uint32_t)0, BGFX_BUFFER_ALLOW_RESIZE);
-  Update();
+  for(int x = 0; x < 16; x++) {
+    for(int y = 0; y < 256; y++) {
+      for(int z = 0; z < 16; z++) {
+        char block_id = chunk.GetBlocks()[x][y][z];
+        if(block_id == 0) {
+          continue;
+        }
+      
+        glm::ivec3 block_pos = {chunk.GetPos().x * 16 + x, y, chunk.GetPos().y * 16 + z};
+
+        for(int i = 0; i < DirectionCount; i++) {
+          glm::ivec3 check_pos = block_pos + DIRECTION_VECTORS_I[i];
+          if(world.GetBlock(check_pos) != 0) {
+            continue;
+          }
+          char light_level = std::max(world.GetBlockLightLevel(check_pos), world.GetSkyLightLevel(check_pos));
+          if(light_level == -1) {
+            light_level = 15;
+          }
+
+          addBlockFace(
+            static_cast<Direction>(i),
+            block_pos,
+            block_id,
+            light_level,
+            atlas,
+            vertices,
+            triangles
+          );
+        }
+      } 
+    }
+  }
+  vertex_buffer_ = bgfx::createVertexBuffer(bgfx::copy(vertices.data(), vertices.size() * sizeof(ChunkVertex)), layout);
+  index_buffer_ = bgfx::createIndexBuffer(bgfx::copy(triangles.data(), triangles.size() * sizeof(uint16_t)));
 }
 
 ChunkMesh::~ChunkMesh() {
@@ -97,7 +132,7 @@ ChunkMesh::~ChunkMesh() {
   bgfx::destroy(index_buffer_);
 }
 
-void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<std::uint16_t>& triangles) {
+void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, char light_level, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<std::uint16_t>& triangles) {
 
   const std::array<float, 12>* face = BLOCK_FACES[dir];
 
@@ -114,6 +149,8 @@ void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atl
 
   int base_vertex_index = vertices.size();
 
+  float light_level_f = (float)light_level / 15.0f;
+
   for(int i = 0; i < 4; i++) {
     float vert_x = (*face)[i*3] + pos.x;
     float vert_y = (*face)[i*3 + 1] + pos.y;
@@ -125,7 +162,8 @@ void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atl
 
     ChunkVertex vertex {
       .pos = glm::vec3(vert_x, vert_y , vert_z),
-      .uv = uv
+      .uv = uv,
+      .light_level = light_level_f
     };
     vertices.push_back(vertex);
   }
@@ -135,52 +173,6 @@ void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atl
   }
 }
 
-void ChunkMesh::Update() {
-  if(!chunk_->HasChanged()) {
-    return;
-  }
-
-  auto& blocks = chunk_->GetBlocks();
-
-  std::vector<ChunkVertex> vertices;
-  std::vector<uint16_t> triangles;
-
-
-  for(int x = 0; x < 16; x++) {
-    for(int y = 0; y < 256; y++) {
-      for(int z = 0; z < 16; z++) {
-        glm::ivec3 block_pos = glm::ivec3(x, y, z);
-        char block = blocks[x][y][z];
-
-        if(blocks[x][y][z] == 0) {
-          continue;
-        }
-
-        std::array<bool, 6> visible = chunk_->GetVisibleFaces(block_pos);
-
-        for(int i = 0; i < DirectionCount; i++) {
-          if(!visible[i]) {
-            continue;
-          }
-
-          addBlockFace(
-            static_cast<Direction>(i),
-            {block_pos.x + 16 * chunk_->GetPos().x, block_pos.y, block_pos.z + 16 * chunk_->GetPos().y},
-            block,
-            *atlas_,
-            vertices,
-            triangles
-          );
-        }
-      } 
-    }
-  }
-
-  bgfx::update(vertex_buffer_, 0, bgfx::copy(vertices.data(), vertices.size() * sizeof(ChunkVertex)));
-  bgfx::update(index_buffer_, 0, bgfx::copy(triangles.data(), triangles.size() * sizeof(uint16_t)));
-
-  chunk_->Redrawn();
-}
 
 void ChunkMesh::Bind() {
 

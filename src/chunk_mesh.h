@@ -8,18 +8,14 @@
 #include "direction.h"
 #include "chunk_vertex.h"
 
-void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<std::uint16_t>& triangles);
+void addBlockFace(Direction dir, glm::ivec3 pos, char block_id, char light_level, const Atlas& atlas, std::vector<ChunkVertex>& vertices, std::vector<std::uint16_t>& triangles);
 
 class ChunkMesh {
  public:
-  ChunkMesh(Chunk* chunk, const Atlas* atlas, const bgfx::VertexLayout& layout);
+  ChunkMesh(const Chunk& chunk, const World& world, const Atlas& atlas, const bgfx::VertexLayout& layout);
   ~ChunkMesh();
-  void Update();
   void Bind();
  private:
-  Chunk* chunk_;
-  void addFace(Direction dir, glm::ivec3 pos, char block, std::vector<ChunkVertex>& vertices, std::vector<unsigned int>& triangles);
-  bgfx::DynamicVertexBufferHandle vertex_buffer_;
-  bgfx::DynamicIndexBufferHandle index_buffer_;
-  const Atlas* atlas_;
+  bgfx::VertexBufferHandle vertex_buffer_;
+  bgfx::IndexBufferHandle index_buffer_;
 };

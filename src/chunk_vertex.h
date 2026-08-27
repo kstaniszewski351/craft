@@ -5,4 +5,5 @@
 struct ChunkVertex {
   glm::vec3 pos;
   glm::vec2 uv;
+  float light_level;
 };

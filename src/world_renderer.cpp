@@ -24,6 +24,7 @@ WorldRenderer::WorldRenderer(World& world, const Atlas& atlas) :
   vertex_layout_.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+    .add(bgfx::Attrib::Color0, 1, bgfx::AttribType::Float)
     .end();
 
   atlas_handle_ = bgfx::createUniform("s_atlas", bgfx::UniformType::Sampler);
@@ -54,14 +55,21 @@ void WorldRenderer::Update() {
 
   for(auto& chunk : loaded_chunks) {
     if(!meshes_.contains(chunk.first)) {
-      meshes_[chunk.first] = std::make_unique<ChunkMesh>(&chunk.second, &atlas_, vertex_layout_);
+      meshes_[chunk.first] = std::make_unique<ChunkMesh>(chunk.second, world_, atlas_, vertex_layout_);
     }
   }
 
-  //update meshes
-  for(auto& mesh : meshes_) {
-    mesh.second->Update();
+  for(auto& it : meshes_) {
+    auto& chunk = loaded_chunks.at(it.first);
+    if(!chunk.HasChanged()) {continue;}
+
+    meshes_[it.first] = std::make_unique<ChunkMesh>(chunk, world_, atlas_, vertex_layout_);
+    chunk.Redrawn();
   }
+  //update meshes
+  // for(auto& mesh : meshes_) {
+  //   mesh.second->Update();
+  // }
 
 
 }

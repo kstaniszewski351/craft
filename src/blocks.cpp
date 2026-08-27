@@ -24,7 +24,7 @@ const Block& RegisterWithItem(std::string name, Block* block, std::string displa
 void RegisterBlocks() {
   RegisterWithItem(
     "dirt",
-    new UniformBlock("res/textures/dirt.png"),
+    new UniformBlock("res/textures/dirt.png", true),
     "Dirt"
   );
   RegisterWithItem(
@@ -32,4 +32,8 @@ void RegisterBlocks() {
     new GrassBlock("res/textures/grass_top.png", "res/textures/dirt.png", "res/textures/grass_side.png"),
     "Grass block"
   );
+  RegisterWithItem(
+    "lamp",
+    new UniformBlock("res/textures/lamp.png", true, {.lightLevel = 15}),
+    "Lamp");
 }

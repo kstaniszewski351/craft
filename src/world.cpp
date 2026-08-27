@@ -1,10 +1,13 @@
 #include "world.h"
 #include "chunk.h"
+#include "direction.h"
+#include "registries.h"
 #include "ray.h"
 #include <glm/common.hpp>
 #include <glm/ext/vector_int2.hpp>
 #include <glm/ext/vector_int3.hpp>
 #include <glm/geometric.hpp>
+#include <queue>
 
 constexpr int RENDER_DISTANCE = 4;
 
@@ -33,7 +36,7 @@ std::unordered_map<glm::ivec2, Chunk>& World::GetChunks() {
   return loaded_chunks_;
 }
 
-void World::UpdateLoaded(glm::ivec3 player_pos) {
+void World::Update(glm::ivec3 player_pos) {
   glm::ivec2 player_chunk = GetChunkPos(player_pos);
   
   for(auto chunk = loaded_chunks_.cbegin(); chunk != loaded_chunks_.cend();) {
@@ -56,6 +59,87 @@ void World::UpdateLoaded(glm::ivec3 player_pos) {
 
       if(!loaded_chunks_.contains(chunk)) {
         LoadChunk(chunk);
+      }
+    }
+  }
+
+  for(LightUpdate& update : light_remove_updates_) {
+    fillLightRemove(update.pos, update.level);
+  }
+
+  for(LightUpdate& update : light_add_updates_) {
+    fillLightAdd(update.pos, update.level);
+  }
+  light_remove_updates_.clear();
+  light_add_updates_.clear();
+}
+
+void World::fillLightAdd(glm::ivec3 pos, char level) {
+  std::queue<std::pair<glm::ivec3, char>> to_check;
+  std::unordered_set<glm::ivec3> visited;
+
+  to_check.push({pos, level});
+  visited.insert(pos);
+  if(level > GetBlockLightLevel(pos)) {
+    SetBlockLightLevel(pos, level);
+  }
+
+  while(to_check.size() != 0) {
+    auto top = to_check.front();
+    to_check.pop();
+    glm::ivec3 check_pos = top.first;
+    char check_level = top.second;
+
+    for(int i = 0; i < DirectionCount; i++) {
+      glm::ivec3 new_pos = check_pos + DIRECTION_VECTORS_I[i];
+      if(
+        !visited.contains(new_pos) &&
+        GetBlock(new_pos) == 0 &&
+        GetBlockLightLevel(new_pos) < check_level
+      ) {
+        visited.insert(new_pos);
+        if(check_level > 1) {
+          to_check.push({new_pos, check_level -1});
+        }
+        SetBlockLightLevel(new_pos, check_level - 1);
+      }
+    }
+  }
+
+}
+
+void World::fillLightRemove(glm::ivec3 pos, char level) {
+  std::queue<std::pair<glm::ivec3, char>> to_check;
+  std::unordered_set<glm::ivec3> visited;
+
+  to_check.push({pos, level});
+  visited.insert(pos);
+  SetBlockLightLevel(pos, 0);
+
+  while(to_check.size() != 0) {
+    auto top = to_check.front();
+    to_check.pop();
+    glm::ivec3 check_pos = top.first;
+    char check_level = top.second;
+
+    for(int i = 0; i < DirectionCount; i++) {
+      glm::ivec3 new_pos = check_pos + DIRECTION_VECTORS_I[i];
+      if(
+        !visited.contains(new_pos) &&
+        GetBlockLightLevel(new_pos) != 0
+      ) {
+        char block_level = GetBlockLightLevel(new_pos);
+        visited.insert(new_pos);
+        if(block_level == check_level - 1) {
+          if(check_level > 1) {
+            to_check.push({new_pos, check_level -1});
+          }
+          SetBlockLightLevel(new_pos, 0);
+        }
+        else if(block_level >= check_level) {
+          light_add_updates_.push_back({new_pos, static_cast<char>(block_level) });
+          //fillLightAdd(check_pos, block_level - 1);
+        }
       }
     }
   }
@@ -87,6 +171,80 @@ char World::GetBlock(glm::ivec3 pos) const {
   return chunk->second.GetBlock(block_pos);
 }
 
+char World::GetBlockLightLevel(glm::ivec3 pos) const {
+  if(!InWorld(pos)) {
+    return -1;
+  }
+
+  glm::ivec2 chunk_pos = GetChunkPos(pos);
+  glm::ivec3 block_pos = GetChunkBlockPos(pos);
+
+
+  auto chunk =  loaded_chunks_.find(chunk_pos);
+
+  if(chunk == loaded_chunks_.end()) {
+    return -1;
+  }
+  
+  return chunk->second.GetBlockLightLevel(block_pos);
+}
+
+char World::GetSkyLightLevel(glm::ivec3 pos) const {
+  if(!InWorld(pos)) {
+    return -1;
+  }
+
+  glm::ivec2 chunk_pos = GetChunkPos(pos);
+  glm::ivec3 block_pos = GetChunkBlockPos(pos);
+
+
+  auto chunk =  loaded_chunks_.find(chunk_pos);
+
+  if(chunk == loaded_chunks_.end()) {
+    return -1;
+  }
+  
+  return chunk->second.GetSkyLightLevel(block_pos);
+}
+
+bool World::SetBlockLightLevel(glm::ivec3 pos, char level) {
+  if(!InWorld(pos)) {
+    return false;
+  }
+
+  glm::ivec2 chunk_pos = GetChunkPos(pos);
+  glm::ivec3 block_pos = GetChunkBlockPos(pos);
+
+
+  auto chunk =  loaded_chunks_.find(chunk_pos);
+
+  if(chunk == loaded_chunks_.end()) {
+    return false;
+  }
+
+  chunk->second.SetBlockLightLevel(block_pos, level);
+  return true;
+}
+
+bool World::SetSkyLightLevel(glm::ivec3 pos, char level) {
+  if(!InWorld(pos)) {
+    return false;
+  }
+
+  glm::ivec2 chunk_pos = GetChunkPos(pos);
+  glm::ivec3 block_pos = GetChunkBlockPos(pos);
+
+
+  auto chunk =  loaded_chunks_.find(chunk_pos);
+
+  if(chunk == loaded_chunks_.end()) {
+    return false;
+  }
+
+  chunk->second.SetSkyLightLevel(block_pos, level);
+  return true;
+}
+
 bool World::SetBlock(glm::ivec3 pos, char block) {
   if(!InWorld(pos)) {
     return false;
@@ -102,7 +260,14 @@ bool World::SetBlock(glm::ivec3 pos, char block) {
     return false;
   }
 
+  char level = GetBlockLightLevel(pos);
+  light_remove_updates_.push_back({pos, level});
+
   chunk->second.SetBlock(block, block_pos);
+  if(block != 0) {
+    char level = gBlockRegistry.Get(block).GetProps().lightLevel;
+    light_add_updates_.push_back({pos, level});
+  }
   return true;
 }
 

@@ -9,13 +9,34 @@
 
 Chunk::Chunk(glm::ivec2 pos, World& world) : 
   chunk_pos_(pos),
-  has_changed_(true),
+  has_changed_(false),
   blocks_(std::make_unique<Blocks>()),
+  lighting_(std::make_unique<Blocks>()),
   world_(world) {
 
   neighbors_.fill(nullptr);
   
   Generate(*this);
+}
+
+char Chunk::GetBlockLightLevel(glm::ivec3 pos) const {
+  return lighting_->data()[pos.x][pos.y][pos.z] & 0x0f;
+};
+
+char Chunk::GetSkyLightLevel(glm::ivec3 pos) const {
+  return (lighting_->data()[pos.x][pos.y][pos.z] >> 4) & 0x0f;
+};
+
+void Chunk::SetBlockLightLevel(glm::ivec3 pos, char level) {
+  char& ref = lighting_->data()[pos.x][pos.y][pos.z];
+  ref = level | (ref & 0xf0);
+  has_changed_ = true;
+}
+
+void Chunk::SetSkyLightLevel(glm::ivec3 pos, char level) {
+  char& ref = lighting_->data()[pos.x][pos.y][pos.z];
+  ref = (level << 4) | (ref & 0x0f);
+  has_changed_ = true;
 }
 
 void Chunk::SetBlock(char block, glm::ivec3 pos) {

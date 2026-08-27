@@ -40,6 +40,7 @@ Atlas* GenerateIconAtlas(std::vector<const Block*>& blocks, int icon_size, const
   layout.begin()
     .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
     .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+    .add(bgfx::Attrib::Color0, 1, bgfx::AttribType::Float)
   .end();
 
   // bgfx::DynamicVertexBufferHandle vertex_buf = bgfx::createDynamicVertexBuffer((unsigned int)0, layout, BGFX_BUFFER_ALLOW_RESIZE);
@@ -86,7 +87,7 @@ Atlas* GenerateIconAtlas(std::vector<const Block*>& blocks, int icon_size, const
     vertex_offsets[i] = vertices.size();
     triangle_offsets[i] = triangles.size();
     for(int d = 0; d < DirectionCount; d++) {
-      addBlockFace((Direction)d, {0, 0, 0}, block_id, blocks_atlas, vertices, triangles);
+      addBlockFace((Direction)d, {0, 0, 0}, block_id, 15, blocks_atlas, vertices, triangles);
     }
     vertex_lengths[i] = vertices.size() - vertex_offsets[i];
     triangle_lengths[i] = triangles.size() - triangle_offsets[i];
