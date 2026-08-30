@@ -8,6 +8,7 @@
 #include <glm/ext/vector_int3.hpp>
 #include <glm/geometric.hpp>
 #include <queue>
+#include <unordered_set>
 
 constexpr int RENDER_DISTANCE = 4;
 
@@ -17,19 +18,10 @@ int p_mod(int i) {
 
 int chunk_div(int p) {
   return (p >= 0) ? p / 16 : (p - 15) / 16;
-  // if(p >= 0) {
-  //   return p / 16;
-  // }
-  // else {
-  //   return p / 16 - 1;
-  // }
 }
 
 World::World() {
-  // loaded_chunks_.emplace(glm::ivec2(0, 0), Chunk(glm::ivec2(0, 0), *this));
-  // loaded_chunks_.emplace(glm::ivec2(1, 0), Chunk(glm::ivec2(1, 0), *this));
-  LoadChunk(glm::ivec2(0, 0));
-  // LoadChunk(glm::ivec2(1, 0));
+
 }
 
 std::unordered_map<glm::ivec2, Chunk>& World::GetChunks() {
@@ -64,17 +56,18 @@ void World::Update(glm::ivec3 player_pos) {
   }
 
   for(LightUpdate& update : light_remove_updates_) {
-    fillLightRemove(update.pos, update.level);
+    fillBlockLightRemove(update.pos, update.level);
   }
 
   for(LightUpdate& update : light_add_updates_) {
-    fillLightAdd(update.pos, update.level);
+    fillBlockLightAdd(update.pos, update.level);
   }
   light_remove_updates_.clear();
   light_add_updates_.clear();
+  sky_light_updates_.clear();
 }
 
-void World::fillLightAdd(glm::ivec3 pos, char level) {
+void World::fillBlockLightAdd(glm::ivec3 pos, char level) {
   std::queue<std::pair<glm::ivec3, char>> to_check;
   std::unordered_set<glm::ivec3> visited;
 
@@ -108,7 +101,7 @@ void World::fillLightAdd(glm::ivec3 pos, char level) {
 
 }
 
-void World::fillLightRemove(glm::ivec3 pos, char level) {
+void World::fillBlockLightRemove(glm::ivec3 pos, char level) {
   std::queue<std::pair<glm::ivec3, char>> to_check;
   std::unordered_set<glm::ivec3> visited;
 
@@ -138,11 +131,17 @@ void World::fillLightRemove(glm::ivec3 pos, char level) {
         }
         else if(block_level >= check_level) {
           light_add_updates_.push_back({new_pos, static_cast<char>(block_level) });
-          //fillLightAdd(check_pos, block_level - 1);
         }
       }
     }
   }
+}
+
+void World::fillSkyLight(glm::ivec3 pos) {
+
+  int height = GetHeight({pos.x, pos.z});
+
+
 }
 
 glm::ivec2 World::GetChunkPos(glm::ivec3 pos) {
@@ -205,6 +204,20 @@ char World::GetSkyLightLevel(glm::ivec3 pos) const {
   }
   
   return chunk->second.GetSkyLightLevel(block_pos);
+}
+
+unsigned char World::GetHeight(glm::ivec2 pos) const {
+
+  glm::ivec2 chunk_pos = GetChunkPos({pos.x, 0, pos.y});
+  glm::ivec3 block_pos = GetChunkBlockPos({pos.x, 0, pos.y});
+
+
+  auto chunk =  loaded_chunks_.find(chunk_pos);
+  if(chunk == loaded_chunks_.end()) {
+    return -1;
+  }
+
+  return chunk->second.GetHeight({block_pos.x, block_pos.z});
 }
 
 bool World::SetBlockLightLevel(glm::ivec3 pos, char level) {

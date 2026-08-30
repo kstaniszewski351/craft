@@ -12,11 +12,13 @@ Chunk::Chunk(glm::ivec2 pos, World& world) :
   has_changed_(false),
   blocks_(std::make_unique<Blocks>()),
   lighting_(std::make_unique<Blocks>()),
+  heightmap_(std::make_unique<std::array<std::array<unsigned char, CHUNK_SIZE.z>, CHUNK_SIZE.x>>()),
   world_(world) {
 
   neighbors_.fill(nullptr);
   
   Generate(*this);
+  createHeightmap();
 }
 
 char Chunk::GetBlockLightLevel(glm::ivec3 pos) const {
@@ -41,8 +43,24 @@ void Chunk::SetSkyLightLevel(glm::ivec3 pos, char level) {
 
 void Chunk::SetBlock(char block, glm::ivec3 pos) {
   blocks_->data()[pos.x][pos.y][pos.z] = block;
-
   has_changed_ = true;
+
+  if(pos.y > heightmap_->data()[pos.x][pos.z] && block != 0) {
+    heightmap_->data()[pos.x][pos.z] = pos.y;
+  }
+  if(pos.y == heightmap_->data()[pos.x][pos.z] && block == 0) {
+    int y = pos.y;
+
+    while(blocks_->data()[pos.x][y][pos.z] == 0 && y > 0) {
+      y--;
+    }
+
+    heightmap_->data()[pos.x][pos.z] = y;
+  }
+}
+
+unsigned char Chunk::GetHeight(glm::ivec2 pos) const {
+  return heightmap_->data()[pos.x][pos.y];
 }
 
 char Chunk::GetBlock(glm::ivec3 pos) const {
@@ -111,3 +129,15 @@ std::array<bool, 6> Chunk::GetVisibleFaces(glm::ivec3 pos) const {
 
   return res;
 };
+
+void Chunk::createHeightmap() {
+  for(int x = 0; x < CHUNK_SIZE.x; x++) {
+    for(int z = 0; z < CHUNK_SIZE.z; z++) {
+      int y = CHUNK_SIZE.y - 1;
+      while(blocks_->data()[x][y][z] == 0 && y > 0) {
+        y--;
+      }
+      heightmap_->data()[x][z] = y;
+    }
+  }
+}

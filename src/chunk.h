@@ -33,6 +33,7 @@ class Chunk {
     char GetBlock(glm::ivec3 pos) const;
     char GetBlockLightLevel(glm::ivec3 pos) const;
     char GetSkyLightLevel(glm::ivec3 pos) const;
+    unsigned char GetHeight(glm::ivec2 pos) const;
     void SetBlockLightLevel(glm::ivec3 pos, char level);
     void SetSkyLightLevel(glm::ivec3 pos, char level);
     const Blocks& GetBlocks() const;
@@ -43,11 +44,13 @@ class Chunk {
     void Redrawn();
     std::array<bool, 6> GetVisibleFaces(glm::ivec3 pos) const;
   private:
+    void createHeightmap();
     std::array<Chunk*, 4> neighbors_;
     glm::ivec2 chunk_pos_;
     bool has_changed_;
     std::unique_ptr<Blocks> blocks_;
     std::unique_ptr<Blocks> lighting_;
+    std::unique_ptr<std::array<std::array<unsigned char, CHUNK_SIZE.z>, CHUNK_SIZE.x>> heightmap_;
     World& world_;
     
 };

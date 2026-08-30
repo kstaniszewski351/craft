@@ -2,6 +2,8 @@
 #include "ray.h"
 #include <glm/ext/vector_int3.hpp>
 #include <optional>
+#include <queue>
+#include <unordered_set>
 #define GLM_ENABLE_EXPERIMENTAL
 
 #include <unordered_map>
@@ -21,6 +23,7 @@ class World {
     char GetBlock(glm::ivec3 pos) const;
     char GetBlockLightLevel(glm::ivec3 pos) const;
     char GetSkyLightLevel(glm::ivec3 pos) const;
+    unsigned char GetHeight(glm::ivec2 pos) const;
     bool SetBlockLightLevel(glm::ivec3 pos, char level);
     bool SetSkyLightLevel(glm::ivec3 pos, char level);
     static bool InWorld(glm::ivec3 pos);
@@ -37,9 +40,11 @@ class World {
       char level;
     };
 
-    void fillLightAdd(glm::ivec3 pos, char level);
-    void fillLightRemove(glm::ivec3 pos, char level);
+    void fillBlockLightAdd(glm::ivec3 pos, char level);
+    void fillBlockLightRemove(glm::ivec3 pos, char level);
+    void fillSkyLight(glm::ivec3 pos);
     std::unordered_map<glm::ivec2, Chunk> loaded_chunks_;
     std::vector<LightUpdate> light_add_updates_;
     std::vector<LightUpdate> light_remove_updates_;
+    std::vector<glm::vec3> sky_light_updates_;
 };
