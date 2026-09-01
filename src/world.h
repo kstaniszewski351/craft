@@ -39,12 +39,19 @@ class World {
       glm::ivec3 pos;
       char level;
     };
+    struct SkyLightUpdate {
+      glm::ivec3 pos;
+      bool height_change;
+      char prev_level;
+    };
 
     void fillBlockLightAdd(glm::ivec3 pos, char level);
     void fillBlockLightRemove(glm::ivec3 pos, char level);
-    void fillSkyLight(glm::ivec3 pos);
+    void fillSkyLightAdd(glm::ivec3 pos, char level, bool column);
+    void fillSkyLightRemove(glm::ivec3 pos, bool column);
     std::unordered_map<glm::ivec2, Chunk> loaded_chunks_;
     std::vector<LightUpdate> light_add_updates_;
     std::vector<LightUpdate> light_remove_updates_;
-    std::vector<glm::vec3> sky_light_updates_;
+    std::vector<SkyLightUpdate> sky_light_updates_;
+    std::vector<LightUpdate> sky_light_add_updates_;
 };

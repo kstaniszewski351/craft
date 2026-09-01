@@ -11,12 +11,13 @@ void Generate(Chunk& chunk) {
         char id = 0;
         if(y == 4) {
           id = grass;
+          chunk.SetSkyLightLevel({x, y, z}, 15);
         }
         else if(y < 4) {
           id = dirt;
         }
         else {
-          chunk.SetBlockLightLevel({x, y, z}, 15);
+          chunk.SetSkyLightLevel({x, y, z}, 15);
         }
         chunk.SetBlock(id, {x, y, z});
       }

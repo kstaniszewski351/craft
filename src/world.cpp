@@ -55,6 +55,18 @@ void World::Update(glm::ivec3 player_pos) {
     }
   }
 
+  for(SkyLightUpdate& update  : sky_light_updates_) {
+    if(update.height_change) {
+      unsigned char height = GetHeight({update.pos.x, update.pos.z});
+      glm::ivec3 pos = {update.pos.x, height, update.pos.z};
+      fillSkyLightRemove(pos, true);
+      fillSkyLightAdd(pos, 15, true);
+    }
+    fillSkyLightRemove(update.pos, false);   
+  }
+  for(LightUpdate& update : sky_light_add_updates_) {
+    fillSkyLightAdd(update.pos, update.level, false);
+  }
   for(LightUpdate& update : light_remove_updates_) {
     fillBlockLightRemove(update.pos, update.level);
   }
@@ -65,6 +77,7 @@ void World::Update(glm::ivec3 player_pos) {
   light_remove_updates_.clear();
   light_add_updates_.clear();
   sky_light_updates_.clear();
+  sky_light_add_updates_.clear();
 }
 
 void World::fillBlockLightAdd(glm::ivec3 pos, char level) {
@@ -137,11 +150,96 @@ void World::fillBlockLightRemove(glm::ivec3 pos, char level) {
   }
 }
 
-void World::fillSkyLight(glm::ivec3 pos) {
+void World::fillSkyLightRemove(glm::ivec3 pos, bool column) {
+  std::queue<std::pair<glm::ivec3, char>> to_check;
+  std::unordered_set<glm::ivec3> visited;
 
-  int height = GetHeight({pos.x, pos.z});
 
+  if(column) {
+    for(int i = pos.y - 1; i >=0 && GetBlock({pos.x, i, pos.z}) == 0; i--) {
+      glm::ivec3 new_pos = {pos.x, i, pos.z};
+      to_check.push({new_pos, GetSkyLightLevel(new_pos)});
+      visited.insert(new_pos);
+      SetSkyLightLevel(new_pos, 0);
+    }
+  }
+  else {
+    visited.insert(pos);
+    to_check.push({pos, GetSkyLightLevel(pos)});
+    SetSkyLightLevel(pos, 0);
+  }
 
+  while(to_check.size() != 0) {
+    auto top = to_check.front();
+    to_check.pop();
+    glm::ivec3 check_pos = top.first;
+    char check_level = top.second;
+
+    for(int i = 0; i < DirectionCount; i++) {
+      glm::ivec3 new_pos = check_pos + DIRECTION_VECTORS_I[i];
+      if(
+        !visited.contains(new_pos) &&
+        GetBlock(new_pos) == 0 &&
+        GetSkyLightLevel(new_pos) != 0
+      ) {
+        char block_level = GetSkyLightLevel(new_pos);
+        visited.insert(new_pos);
+        if(block_level == check_level - 1) {
+          if(check_level > 1) {
+            to_check.push({new_pos, check_level -1});
+          }
+          SetSkyLightLevel(new_pos, 0);
+        }
+        else {
+          sky_light_add_updates_.push_back({new_pos, static_cast<char>(block_level) });
+        }
+      }
+    }
+  }
+}
+
+void World::fillSkyLightAdd(glm::ivec3 pos, char level, bool column) {
+  std::queue<std::pair<glm::ivec3, char>> to_check;
+  std::unordered_set<glm::ivec3> visited;
+
+  if(GetBlock(pos) == 0) {
+    to_check.push({pos, level});
+    visited.insert(pos);
+  }
+  if(level > GetSkyLightLevel(pos)) {
+    SetSkyLightLevel(pos, level);
+  }
+  if(column) {
+    for(int y = pos.y + 1; y < CHUNK_SIZE.y; y++) {
+      glm::ivec3 check_pos = {pos.x, y, pos.z};
+      
+      to_check.push({check_pos, level});
+      if(level > GetSkyLightLevel(pos)) {
+        SetSkyLightLevel(pos, level);
+      }
+    }
+  }
+  while(to_check.size() != 0) {
+    auto top = to_check.front();
+    to_check.pop();
+    glm::ivec3 check_pos = top.first;
+    char check_level = top.second;
+
+    for(int i = 0; i < DirectionCount; i++) {
+      glm::ivec3 new_pos = check_pos + DIRECTION_VECTORS_I[i];
+      if(
+        !visited.contains(new_pos) &&
+        GetSkyLightLevel(new_pos) < check_level
+        && GetBlock(new_pos) == 0
+      ) {
+        visited.insert(new_pos);
+        if(check_level > 1) {
+          to_check.push({new_pos, check_level -1});
+        }
+        SetSkyLightLevel(new_pos, check_level - 1);
+      }
+    }
+  }
 }
 
 glm::ivec2 World::GetChunkPos(glm::ivec3 pos) {
@@ -275,8 +373,14 @@ bool World::SetBlock(glm::ivec3 pos, char block) {
 
   char level = GetBlockLightLevel(pos);
   light_remove_updates_.push_back({pos, level});
+  unsigned char height = chunk->second.GetHeight({block_pos.x, block_pos.z});
 
   chunk->second.SetBlock(block, block_pos);
+  bool height_changed = false;
+  if(chunk->second.GetHeight({block_pos.x, block_pos.z}) != height) {
+    height_changed = true;
+  }
+  sky_light_updates_.push_back({pos, height_changed});
   if(block != 0) {
     char level = gBlockRegistry.Get(block).GetProps().lightLevel;
     light_add_updates_.push_back({pos, level});
